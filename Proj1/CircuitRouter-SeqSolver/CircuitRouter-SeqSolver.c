@@ -146,8 +146,28 @@ static void parseArgs(long argc, char *const argv[])
 
     for (i = optind; i < argc; i++)
     {
-        fprintf(stderr, "Non-option argument: %s\n", argv[i]);
-        opterr++;
+        int fileFound = FALSE;
+
+        if (!fileFound)
+        {
+            FILE *fp = fopen(argv[i], "r");
+
+            if (fp == NULL)
+            {
+                fprintf(stderr, "Non-option argument: %s\n", argv[i]);
+            }
+            else
+            {
+                global_inputFile = argv[i];
+                fileFound = TRUE;
+            }
+            fclose(fp);
+        }
+        else
+        {
+            fprintf(stderr, "Non-option argument: %s\n", argv[i]);
+            opterr++;
+        }
     }
 
     if (opterr)
@@ -169,7 +189,7 @@ int main(int argc, char **argv)
     maze_t *mazePtr = maze_alloc();
     assert(mazePtr);
 
-    long numPathToRoute = maze_read(mazePtr);
+    long numPathToRoute = maze_read(mazePtr, global_inputFile);
     router_t *routerPtr = router_alloc(global_params[PARAM_XCOST],
                                        global_params[PARAM_YCOST],
                                        global_params[PARAM_ZCOST],
