@@ -1,5 +1,21 @@
-# exclude everything .o
+# C files
 *.o
 *.obj
+
+#Executables
+*.out
+*.app
 *.exe
+
+#Valgrind Files
+vgcore*
+
+#Vscode
+.vscode
+
+#Project Output files
+*.txt.res
+*.txt.res.old
+
+
 
