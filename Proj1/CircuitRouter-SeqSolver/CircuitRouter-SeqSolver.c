@@ -77,7 +77,6 @@ enum param_defaults
     PARAM_DEFAULT_ZCOST = 2,
 };
 
-bool_t global_doPrint = FALSE;
 char *global_inputFile = NULL;
 long global_params[256]; /* 256 = ascii limit */
 
@@ -123,7 +122,7 @@ static void parseArgs(long argc, char *const argv[])
 
     setDefaultParams();
 
-    while ((opt = getopt(argc, argv, "hb:px:y:z:")) != -1)
+    while ((opt = getopt(argc, argv, "hb:x:y:z:")) != -1)
     {
         switch (opt)
         {
@@ -132,9 +131,6 @@ static void parseArgs(long argc, char *const argv[])
         case 'y':
         case 'z':
             global_params[(unsigned char)opt] = atol(optarg);
-            break;
-        case 'p':
-            global_doPrint = TRUE;
             break;
         case '?':
         case 'h':
@@ -222,7 +218,7 @@ int main(int argc, char **argv)
      * Check solution and clean up
      */
     assert(numPathRouted <= numPathToRoute);
-    bool_t status = maze_checkPaths(mazePtr, pathVectorListPtr, global_doPrint);
+    bool_t status = maze_checkPaths(mazePtr, pathVectorListPtr, global_inputFile);
     assert(status == TRUE);
     puts("Verification passed.");
 

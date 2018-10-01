@@ -98,7 +98,7 @@ long maze_read (maze_t* mazePtr, char* inputFile);
  * maze_checkPaths
  * =============================================================================
  */
-bool_t maze_checkPaths (maze_t* mazePtr, list_t* pathListPtr, bool_t doPrintPaths);
+bool_t maze_checkPaths (maze_t* mazePtr, list_t* pathListPtr, char* fileInput);
 
 
 #endif /* MAZE_H */

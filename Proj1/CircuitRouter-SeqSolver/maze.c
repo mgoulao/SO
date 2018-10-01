@@ -62,6 +62,7 @@
 #include "lib/pair.h"
 #include "lib/types.h"
 #include "lib/vector.h"
+#include "lib/concatenate.h"
 
 
 /* =============================================================================
@@ -272,7 +273,7 @@ long maze_read (maze_t* mazePtr, char* fileInput){
  * maze_checkPaths
  * =============================================================================
  */
-bool_t maze_checkPaths (maze_t* mazePtr, list_t* pathVectorListPtr, bool_t doPrintPaths){
+bool_t maze_checkPaths (maze_t* mazePtr, list_t* pathVectorListPtr, char* fileInput){
     grid_t* gridPtr = mazePtr->gridPtr;
     long width  = gridPtr->width;
     long height = gridPtr->height;
@@ -361,10 +362,16 @@ bool_t maze_checkPaths (maze_t* mazePtr, list_t* pathVectorListPtr, bool_t doPri
         } /* iteratate over pathVector */
     } /* iterate over pathVectorList */
 
-    if (doPrintPaths) {
-        puts("\nRouted Maze:");
-        grid_print(testGridPtr);
+    char* fileOutput = strConcatenate(fileInput, ".res");
+    FILE *fileOutputPointer = fopen(fileOutput, "r");
+    if(fileOutputPointer != NULL) {
+        char* oldFileOutput = strConcatenate(fileOutput, ".old");
+        rename(fileOutput, oldFileOutput);
+        fclose(fileOutputPointer);
     }
+
+    grid_print(testGridPtr, fileOutput);
+    
 
     grid_free(testGridPtr);
 
