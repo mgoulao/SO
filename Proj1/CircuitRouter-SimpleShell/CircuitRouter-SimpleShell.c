@@ -8,9 +8,9 @@
 #include "lib/commandlinereader.h"
 
 #define BUFFER_SIZE 80
-#define NUM_INPUTS 2
+#define NUM_INPUTS 3
 
-void runCommand(char *inputFile)
+void runCommand(char *inputFile, int *numChilds)
 {
     int pid;
 
@@ -19,10 +19,12 @@ void runCommand(char *inputFile)
     if (pid < 0)
     {
         printf("Unable to fork\n");
+        return;
     }
-    else if (pid == 0)
+
+    (*numChilds)++;
+    if (pid == 0)
     {
-        printf("-----filho\n");
         if (inputFile != NULL)
         {
             execl("../CircuitRouter-SeqSolver/CircuitRouter-SeqSolver", inputFile, (char *)NULL);
@@ -33,33 +35,35 @@ void runCommand(char *inputFile)
             exit(1);
         }
     }
-    /* else
-    {
-        wait(&state);
-    }  */
 }
 
-void exitCommand()
+void exitCommand(int numChilds)
 {
-    printf("----exit\n");
+    int i, status, pid;
+    for (i = 0; i < numChilds; i++)
+    {
+        pid = wait(&status);
+        printf("CHILD EXITED (PID=%d; return %s)\n", pid, (!WIFEXITED(status)) ? "OK" : "NOK");
+    }
+    printf("END");
 }
 
 int main(int argc, char *argv[])
 {
-    int numArgs;
+    int numArgs, numChilds = 0;
     char **argsVector = (char **)malloc(NUM_INPUTS * sizeof(char *));
-    char *buffer = (char *)malloc((BUFFER_SIZE + 1) * sizeof(char));
+    char *buffer = (char *)malloc((BUFFER_SIZE) * sizeof(char));
 
     while (TRUE)
     {
-        numArgs = readLineArguments(argsVector, NUM_INPUTS + 1, buffer, BUFFER_SIZE);
+        numArgs = readLineArguments(argsVector, NUM_INPUTS, buffer, BUFFER_SIZE);
         if (!strcmp("run", argsVector[0]))
         {
-            runCommand(argsVector[1]);
+            runCommand(argsVector[1], &numChilds);
         }
         else if (!strcmp("exit", argsVector[0]))
         {
-            exitCommand();
+            exitCommand(numChilds);
             break;
         }
         else
@@ -67,6 +71,10 @@ int main(int argc, char *argv[])
             printf("Invalid command\n");
         }
     }
+
+    /* Clean up */
+    free(argsVector);
+    free(buffer);
 
     return 0;
 }

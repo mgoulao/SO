@@ -1,7 +1,7 @@
 #!/bin/bash
 IFS=$'\n'       # make newlines the only separator
 
-echo Test SHell
+echo Test impleShell
 echo --- Make ---
 echo ""
 echo $(make)

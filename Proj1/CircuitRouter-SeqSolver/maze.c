@@ -362,16 +362,18 @@ bool_t maze_checkPaths (maze_t* mazePtr, list_t* pathVectorListPtr, char* fileIn
         } /* iteratate over pathVector */
     } /* iterate over pathVectorList */
 
+    /* generate output file */
     char* fileOutput = strConcatenate(fileInput, ".res");
     FILE *fileOutputPointer = fopen(fileOutput, "r");
     if(fileOutputPointer != NULL) {
         char* oldFileOutput = strConcatenate(fileOutput, ".old");
         rename(fileOutput, oldFileOutput);
         fclose(fileOutputPointer);
+        free(oldFileOutput);
     }
 
     grid_print(testGridPtr, fileOutput);
-    
+    free(fileOutput);
 
     grid_free(testGridPtr);
 

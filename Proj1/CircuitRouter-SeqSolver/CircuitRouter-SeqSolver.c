@@ -115,19 +115,23 @@ static void setDefaultParams()
  */
 static void parseArgs(long argc, char *const argv[])
 {
-    long i;
     long opt;
+    int currentArg = 1;
 
     opterr = 0;
 
     setDefaultParams();
 
-    while ((opt = getopt(argc, argv, "hb:x:y:z:")) != -1)
+    /* while ((opt = getopt(argc, argv, "hb:x:y:z:")) != -1)
     {
         switch (opt)
         {
         case 'b':
+            printf("----BBBBB---\n");
+            break;
         case 'x':
+            printf("----XXXXX---\n");
+            break;
         case 'y':
         case 'z':
             global_params[(unsigned char)opt] = atol(optarg);
@@ -164,8 +168,53 @@ static void parseArgs(long argc, char *const argv[])
             fprintf(stderr, "Non-option argument: %s\n", argv[i]);
             opterr++;
         }
+    } */
+    printf("BEfore while\n");
+    while (currentArg < argc)
+    {
+        printf("---while, arg: %s \n", argv[currentArg]);
+        int fileFound = FALSE;
+        if ((opt = getopt(argc, argv, "hb:x:y:z:")) != -1)
+        {
+            switch (opt)
+            {
+            case 'b':
+                printf("----BBBBB---\n");
+                break;
+            case 'x':
+                printf("----XXXXX---\n");
+                break;
+            case 'y':
+            case 'z':
+                global_params[(unsigned char)opt] = atol(optarg);
+                break;
+            case '?':
+            case 'h':
+            default:
+                opterr++;
+                break;
+            }
+        } else if(!fileFound) {
+            FILE *fp = fopen(argv[currentArg], "r");
+
+            if (fp == NULL)
+            {
+                fprintf(stderr, "Non-option argument: %s\n", argv[currentArg]);
+            }
+            else
+            {
+                global_inputFile = argv[currentArg];
+                fileFound = TRUE;
+                fclose(fp);
+            }
+        } else {
+            fprintf(stderr, "Non-option argument: %s\n", argv[currentArg]);
+            opterr++;
+        }
+        currentArg++;
     }
 
+    
     if (opterr)
     {
         displayUsage(argv[0]);
@@ -181,6 +230,7 @@ int main(int argc, char **argv)
     /*
      * Initialization
      */
+    printf("main\n");
     parseArgs(argc, (char **const)argv);
     maze_t *mazePtr = maze_alloc();
     assert(mazePtr);

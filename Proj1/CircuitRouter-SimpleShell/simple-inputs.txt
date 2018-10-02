@@ -1,3 +1,4 @@
 run ../inputs/random-x32-y32-z3-n64.txt
-run
+run ../inputs/random-x32-y32-z3-n64.txt
+run ../inputs/random-x32-y32-z3-n64.txt
 exit
