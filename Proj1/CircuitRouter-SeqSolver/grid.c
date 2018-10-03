@@ -229,29 +229,26 @@ void grid_addPath_Ptr (grid_t* gridPtr, vector_t* pointVectorPtr){
  * grid_print
  * =============================================================================
  */
-void grid_print (grid_t* gridPtr, char* fileOutput){
+void grid_print (grid_t* gridPtr, FILE* outputFilePointer){
     long width  = gridPtr->width;
     long height = gridPtr->height;
     long depth  = gridPtr->depth;
     long z;
 
-    FILE *fileOutputPointer = fopen(fileOutput, "w");
-
-    fputs("Routed Maze:\n", fileOutputPointer);
+    fputs("Routed Maze:\n", outputFilePointer);
 
     for (z = 0; z < depth; z++) {
-        fprintf(fileOutputPointer, "[z = %li]\n", z);
+        fprintf(outputFilePointer, "[z = %li]\n", z);
         long x;
         for (x = 0; x < width; x++) {
             long y;
             for (y = 0; y < height; y++) {
-                fprintf(fileOutputPointer, "%4li", *grid_getPointRef(gridPtr, x, y, z));
+                fprintf(outputFilePointer, "%4li", *grid_getPointRef(gridPtr, x, y, z));
             }
-            fputs("\n", fileOutputPointer);
+            fputs("\n", outputFilePointer);
         }
-        fputs("\n", fileOutputPointer);
+        fputs("\n", outputFilePointer);
     }
-    fclose(fileOutputPointer);
 }
 
 

@@ -8,7 +8,7 @@ echo $(make)
 echo ""
 echo --- Run ---
 echo ""
-for l in $(./CircuitRouter-SeqSolver -x inputs/random-x32-y32-z3-n64.txt -b) 
+for l in $(./CircuitRouter-SeqSolver -x 2 inputs/random-x32-y32-z3-n64.txt -b 2) 
 do
 	echo $l
 done

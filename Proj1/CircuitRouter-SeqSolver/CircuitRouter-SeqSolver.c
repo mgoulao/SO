@@ -60,6 +60,7 @@
 #include "lib/timer.h"
 #include "lib/types.h"
 #include "lib/commandlinereader.h"
+#include "lib/concatenate.h"
 
 enum param_types
 {
@@ -110,28 +111,41 @@ static void setDefaultParams()
 }
 
 /* =============================================================================
+ * fileValid
+ * =============================================================================
+ */
+
+static int fileValid(char *fileName)
+{
+    FILE *fp = fopen(fileName, "r");
+
+    if (fp == NULL)
+        return FALSE;
+
+    fclose(fp);
+    return TRUE;
+}
+
+/* =============================================================================
  * parseArgs
  * =============================================================================
  */
 static void parseArgs(long argc, char *const argv[])
 {
+    int i;
     long opt;
-    int currentArg = 1;
+    int fileFound = FALSE;
 
     opterr = 0;
 
     setDefaultParams();
 
-    /* while ((opt = getopt(argc, argv, "hb:x:y:z:")) != -1)
+    while ((opt = getopt(argc, argv, "hb:x:y:z:")) != -1)
     {
         switch (opt)
         {
         case 'b':
-            printf("----BBBBB---\n");
-            break;
         case 'x':
-            printf("----XXXXX---\n");
-            break;
         case 'y':
         case 'z':
             global_params[(unsigned char)opt] = atol(optarg);
@@ -146,78 +160,26 @@ static void parseArgs(long argc, char *const argv[])
 
     for (i = optind; i < argc; i++)
     {
-        int fileFound = FALSE;
-
-        if (!fileFound)
+        if (!fileFound && fileValid(argv[i]))
         {
-            FILE *fp = fopen(argv[i], "r");
-
-            if (fp == NULL)
-            {
-                fprintf(stderr, "Non-option argument: %s\n", argv[i]);
-            }
-            else
-            {
-                global_inputFile = argv[i];
-                fileFound = TRUE;
-            }
-            fclose(fp);
+            global_inputFile = argv[i];
+            fileFound = TRUE;
         }
         else
         {
             fprintf(stderr, "Non-option argument: %s\n", argv[i]);
             opterr++;
         }
-    } */
-    printf("BEfore while\n");
-    while (currentArg < argc)
-    {
-        printf("---while, arg: %s \n", argv[currentArg]);
-        int fileFound = FALSE;
-        if ((opt = getopt(argc, argv, "hb:x:y:z:")) != -1)
-        {
-            switch (opt)
-            {
-            case 'b':
-                printf("----BBBBB---\n");
-                break;
-            case 'x':
-                printf("----XXXXX---\n");
-                break;
-            case 'y':
-            case 'z':
-                global_params[(unsigned char)opt] = atol(optarg);
-                break;
-            case '?':
-            case 'h':
-            default:
-                opterr++;
-                break;
-            }
-        } else if(!fileFound) {
-            FILE *fp = fopen(argv[currentArg], "r");
-
-            if (fp == NULL)
-            {
-                fprintf(stderr, "Non-option argument: %s\n", argv[currentArg]);
-            }
-            else
-            {
-                global_inputFile = argv[currentArg];
-                fileFound = TRUE;
-                fclose(fp);
-            }
-        } else {
-            fprintf(stderr, "Non-option argument: %s\n", argv[currentArg]);
-            opterr++;
-        }
-        currentArg++;
     }
 
-    
     if (opterr)
     {
         displayUsage(argv[0]);
+    }
+    if (!fileFound)
+    {
+        printf("Input File is required\n");
+        exit(1);
     }
 }
 
@@ -230,12 +192,26 @@ int main(int argc, char **argv)
     /*
      * Initialization
      */
-    printf("main\n");
+    printf("%s\n", argv[1]);
     parseArgs(argc, (char **const)argv);
+
+    /* generate output file */
+    char *outputFile = strConcatenate(global_inputFile, ".res");
+    FILE *outputFilePointer = fopen(outputFile, "r");
+    if (outputFilePointer != NULL)
+    {
+        char *oldoutputFile = strConcatenate(outputFile, ".old");
+        rename(outputFile, oldoutputFile);
+        fclose(outputFilePointer);
+        free(oldoutputFile);
+    }
+    outputFilePointer = fopen(outputFile, "w");
+    free(outputFile);
+
     maze_t *mazePtr = maze_alloc();
     assert(mazePtr);
 
-    long numPathToRoute = maze_read(mazePtr, global_inputFile);
+    long numPathToRoute = maze_read(mazePtr, global_inputFile, outputFilePointer);
     router_t *routerPtr = router_alloc(global_params[PARAM_XCOST],
                                        global_params[PARAM_YCOST],
                                        global_params[PARAM_ZCOST],
@@ -261,16 +237,18 @@ int main(int argc, char **argv)
         vector_t *pathVectorPtr = (vector_t *)list_iter_next(&it, pathVectorListPtr);
         numPathRouted += vector_getSize(pathVectorPtr);
     }
-    printf("Paths routed    = %li\n", numPathRouted);
-    printf("Elapsed time    = %f seconds\n", TIMER_DIFF_SECONDS(startTime, stopTime));
+    fprintf(outputFilePointer, "Paths routed    = %li\n", numPathRouted);
+    fprintf(outputFilePointer, "Elapsed time    = %f seconds\n", TIMER_DIFF_SECONDS(startTime, stopTime));
 
     /*
      * Check solution and clean up
      */
     assert(numPathRouted <= numPathToRoute);
-    bool_t status = maze_checkPaths(mazePtr, pathVectorListPtr, global_inputFile);
+    bool_t status = maze_checkPaths(mazePtr, pathVectorListPtr, outputFilePointer);
     assert(status == TRUE);
-    puts("Verification passed.");
+    fputs("Verification passed.", outputFilePointer);
+
+    fclose(outputFilePointer);
 
     maze_free(mazePtr);
     router_free(routerPtr);

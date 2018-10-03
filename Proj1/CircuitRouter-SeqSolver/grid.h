@@ -55,6 +55,7 @@
 #define GRID_H 1
 
 
+#include <stdio.h>
 #include "lib/types.h"
 #include "lib/vector.h"
 
@@ -161,7 +162,7 @@ void grid_addPath_Ptr (grid_t* gridPtr, vector_t* pointVectorPtr);
  * grid_print
  * =============================================================================
  */
-void grid_print (grid_t* gridPtr, char* fileOutput);
+void grid_print (grid_t* gridPtr, FILE* outputFilePointer);
 
 
 #endif /* GRID_H */

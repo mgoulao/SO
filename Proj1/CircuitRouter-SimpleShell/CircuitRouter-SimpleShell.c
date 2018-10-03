@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,7 +11,7 @@
 #define BUFFER_SIZE 80
 #define NUM_INPUTS 3
 
-void runCommand(char *inputFile, int *numChilds)
+void runCommand(char *inputFile, int *numChilds, int MAX_CHILDS)
 {
     int pid;
 
@@ -25,15 +26,7 @@ void runCommand(char *inputFile, int *numChilds)
     (*numChilds)++;
     if (pid == 0)
     {
-        if (inputFile != NULL)
-        {
-            execl("../CircuitRouter-SeqSolver/CircuitRouter-SeqSolver", inputFile, (char *)NULL);
-        }
-        else
-        {
-            printf("Input file needed\n");
-            exit(1);
-        }
+        execl("../CircuitRouter-SeqSolver/CircuitRouter-SeqSolver", inputFile, (char *)NULL);
     }
 }
 
@@ -45,21 +38,52 @@ void exitCommand(int numChilds)
         pid = wait(&status);
         printf("CHILD EXITED (PID=%d; return %s)\n", pid, (!WIFEXITED(status)) ? "OK" : "NOK");
     }
-    printf("END");
+    printf("END\n");
 }
 
 int main(int argc, char *argv[])
 {
-    int numArgs, numChilds = 0;
+    int numArgs, numChilds = 0, MAX_CHILDS = 0;
     char **argsVector = (char **)malloc(NUM_INPUTS * sizeof(char *));
     char *buffer = (char *)malloc((BUFFER_SIZE) * sizeof(char));
+
+    if (argc > 1)
+    {
+        char *p;
+        errno = 0;
+        long conv = strtol(argv[1], &p, 10);
+
+        if (errno != 0 || *p != '\0')
+            printf("Invalid MAXCHILDREN\n");
+        else
+        {
+            MAX_CHILDS = conv;
+            if (MAX_CHILDS < 1)
+            {
+                printf("MAXCHILDREN must be positive\n");
+                exit(1);
+            }
+        }
+    }
 
     while (TRUE)
     {
         numArgs = readLineArguments(argsVector, NUM_INPUTS, buffer, BUFFER_SIZE);
+
         if (!strcmp("run", argsVector[0]))
         {
-            runCommand(argsVector[1], &numChilds);
+            if (numArgs == 1)
+            {
+                printf("Input file needed\n");
+            }
+            else if (MAX_CHILDS != 0 && numChilds == MAX_CHILDS)
+            {
+                printf("Children limit reached, unable to create more.\n");
+            }
+            else
+            {
+                runCommand(argsVector[1], &numChilds, MAX_CHILDS);
+            }
         }
         else if (!strcmp("exit", argsVector[0]))
         {

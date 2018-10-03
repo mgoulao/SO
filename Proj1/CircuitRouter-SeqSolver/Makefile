@@ -14,9 +14,9 @@ all: $(TARGET)
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) $^ -o $(TARGET) $(LDFLAGS) 
 
-CircuitRouter-SeqSolver.o: CircuitRouter-SeqSolver.c maze.h router.h ../lib/list.h ../lib/timer.h ../lib/types.h ../lib/commandlinereader.h
+CircuitRouter-SeqSolver.o: CircuitRouter-SeqSolver.c maze.h router.h ../lib/list.h ../lib/timer.h ../lib/types.h ../lib/commandlinereader.h ../lib/concatenate.h
 router.o: router.c router.h coordinate.h grid.h ../lib/queue.h ../lib/vector.h
-maze.o: maze.c maze.h coordinate.h grid.h ../lib/list.h ../lib/queue.h ../lib/pair.h ../lib/types.h ../lib/vector.h ../lib/concatenate.h
+maze.o: maze.c maze.h coordinate.h grid.h ../lib/list.h ../lib/queue.h ../lib/pair.h ../lib/types.h ../lib/vector.h
 grid.o: grid.c grid.h coordinate.h ../lib/types.h ../lib/vector.h
 coordinate.o: coordinate.c coordinate.h ../lib/pair.h ../lib/types.h
 ../lib/vector.o: ../lib/vector.c ../lib/vector.h ../lib/types.h ../lib/utility.h

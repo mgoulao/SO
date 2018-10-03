@@ -8,7 +8,7 @@ echo $(make)
 echo ""
 echo --- Run ---
 echo ""
-for l in $(./CircuitRouter-SimpleShell < simple-inputs.txt) 
+for l in $(./CircuitRouter-SimpleShell 2 < simple-inputs.txt) 
 do
 	echo $l
 done

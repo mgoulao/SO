@@ -62,7 +62,6 @@
 #include "lib/pair.h"
 #include "lib/types.h"
 #include "lib/vector.h"
-#include "lib/concatenate.h"
 
 
 /* =============================================================================
@@ -151,7 +150,7 @@ static void addToGrid (grid_t* gridPtr, vector_t* vectorPtr, char* type){
  * =============================================================================
  */
 
-long maze_read (maze_t* mazePtr, char* fileInput){
+long maze_read (maze_t* mazePtr, char* fileInput, FILE* outputFilePointer){
     
     /*
      * Parse input from stdin
@@ -251,8 +250,8 @@ long maze_read (maze_t* mazePtr, char* fileInput){
     addToGrid(gridPtr, wallVectorPtr, "wall");
     addToGrid(gridPtr, srcVectorPtr,  "source");
     addToGrid(gridPtr, dstVectorPtr,  "destination");
-    printf("Maze dimensions = %li x %li x %li\n", width, height, depth);
-    printf("Paths to route  = %li\n", list_getSize(workListPtr));
+    fprintf(outputFilePointer, "Maze dimensions = %li x %li x %li\n", width, height, depth);
+    fprintf(outputFilePointer, "Paths to route  = %li\n", list_getSize(workListPtr));
     
     /*
      * Initialize work queue
@@ -273,7 +272,7 @@ long maze_read (maze_t* mazePtr, char* fileInput){
  * maze_checkPaths
  * =============================================================================
  */
-bool_t maze_checkPaths (maze_t* mazePtr, list_t* pathVectorListPtr, char* fileInput){
+bool_t maze_checkPaths (maze_t* mazePtr, list_t* pathVectorListPtr, FILE* outputFilePointer){
     grid_t* gridPtr = mazePtr->gridPtr;
     long width  = gridPtr->width;
     long height = gridPtr->height;
@@ -362,18 +361,7 @@ bool_t maze_checkPaths (maze_t* mazePtr, list_t* pathVectorListPtr, char* fileIn
         } /* iteratate over pathVector */
     } /* iterate over pathVectorList */
 
-    /* generate output file */
-    char* fileOutput = strConcatenate(fileInput, ".res");
-    FILE *fileOutputPointer = fopen(fileOutput, "r");
-    if(fileOutputPointer != NULL) {
-        char* oldFileOutput = strConcatenate(fileOutput, ".old");
-        rename(fileOutput, oldFileOutput);
-        fclose(fileOutputPointer);
-        free(oldFileOutput);
-    }
-
-    grid_print(testGridPtr, fileOutput);
-    free(fileOutput);
+    grid_print(testGridPtr, outputFilePointer);
 
     grid_free(testGridPtr);
 
