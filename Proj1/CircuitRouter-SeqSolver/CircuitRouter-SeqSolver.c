@@ -114,11 +114,9 @@ static void setDefaultParams()
  * fileValid
  * =============================================================================
  */
-
 static int fileValid(char *fileName)
 {
     FILE *fp = fopen(fileName, "r");
-
     if (fp == NULL)
         return FALSE;
 
@@ -192,7 +190,6 @@ int main(int argc, char **argv)
     /*
      * Initialization
      */
-    printf("%s\n", argv[1]);
     parseArgs(argc, (char **const)argv);
 
     /* generate output file */
@@ -266,7 +263,6 @@ int main(int argc, char **argv)
         vector_free(pathVectorPtr);
     }
     list_free(pathVectorListPtr);
-
     exit(0);
 }
 

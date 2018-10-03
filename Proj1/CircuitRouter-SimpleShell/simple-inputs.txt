@@ -1,4 +1,2 @@
-run ../inputs/random-x32-y32-z3-n64.txt
-run ../inputs/random-x32-y32-z3-n64.txt
-run ../inputs/random-x48-y48-z3-n48.txt
+run ../CircuitRouter-SeqSolver/inputs/random-x32-y32-z3-n64.txt
 exit

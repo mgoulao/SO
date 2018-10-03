@@ -1,4 +1,3 @@
-#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -26,7 +25,7 @@ void runCommand(char *inputFile, int *numChilds, int MAX_CHILDS)
     (*numChilds)++;
     if (pid == 0)
     {
-        execl("../CircuitRouter-SeqSolver/CircuitRouter-SeqSolver", inputFile, (char *)NULL);
+        execl("../CircuitRouter-SeqSolver/CircuitRouter-SeqSolver", "./CircuitRouter-SeqSolver" , inputFile, (char *)NULL);
     }
 }
 
@@ -36,7 +35,7 @@ void exitCommand(int numChilds)
     for (i = 0; i < numChilds; i++)
     {
         pid = wait(&status);
-        printf("CHILD EXITED (PID=%d; return %s)\n", pid, (!WIFEXITED(status)) ? "OK" : "NOK");
+        printf("CHILD EXITED (PID=%d; return %s)\n", pid, (WSTOPSIG(status) == 0) ? "OK" : "NOK");
     }
     printf("END\n");
 }
@@ -50,10 +49,9 @@ int main(int argc, char *argv[])
     if (argc > 1)
     {
         char *p;
-        errno = 0;
         long conv = strtol(argv[1], &p, 10);
 
-        if (errno != 0 || *p != '\0')
+        if (*p != '\0')
             printf("Invalid MAXCHILDREN\n");
         else
         {
