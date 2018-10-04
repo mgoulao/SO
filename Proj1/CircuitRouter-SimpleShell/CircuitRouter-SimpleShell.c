@@ -10,6 +10,11 @@
 #define BUFFER_SIZE 80
 #define NUM_INPUTS 3
 
+void printChildExit(int pid, int status)
+{
+    printf("CHILD EXITED (PID=%d; return %s)\n", pid, (WSTOPSIG(status) == 0) ? "OK" : "NOK");
+}
+
 void runCommand(char *inputFile, int *numChilds, int MAX_CHILDS)
 {
     int pid;
@@ -25,7 +30,7 @@ void runCommand(char *inputFile, int *numChilds, int MAX_CHILDS)
     (*numChilds)++;
     if (pid == 0)
     {
-        execl("../CircuitRouter-SeqSolver/CircuitRouter-SeqSolver", "./CircuitRouter-SeqSolver" , inputFile, (char *)NULL);
+        execl("../CircuitRouter-SeqSolver/CircuitRouter-SeqSolver", "./CircuitRouter-SeqSolver", inputFile, (char *)NULL);
     }
 }
 
@@ -35,7 +40,7 @@ void exitCommand(int numChilds)
     for (i = 0; i < numChilds; i++)
     {
         pid = wait(&status);
-        printf("CHILD EXITED (PID=%d; return %s)\n", pid, (WSTOPSIG(status) == 0) ? "OK" : "NOK");
+        printChildExit(pid, status);
     }
     printf("END\n");
 }
@@ -76,12 +81,12 @@ int main(int argc, char *argv[])
             }
             else if (MAX_CHILDS != 0 && numChilds == MAX_CHILDS)
             {
-                printf("Children limit reached, unable to create more.\n");
+                int status, pid;
+                pid = wait(&status);
+                printChildExit(pid, status);
+                numChilds--;
             }
-            else
-            {
-                runCommand(argsVector[1], &numChilds, MAX_CHILDS);
-            }
+            runCommand(argsVector[1], &numChilds, MAX_CHILDS);
         }
         else if (!strcmp("exit", argsVector[0]))
         {
