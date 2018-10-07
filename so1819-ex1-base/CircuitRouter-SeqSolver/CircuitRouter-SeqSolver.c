@@ -50,6 +50,7 @@
  * =============================================================================
  */
 
+
 #include <assert.h>
 #include <getopt.h>
 #include <stdio.h>
@@ -59,34 +60,31 @@
 #include "router.h"
 #include "lib/timer.h"
 #include "lib/types.h"
-#include "lib/commandlinereader.h"
-#include "lib/concatenate.h"
 
-enum param_types
-{
+enum param_types {
     PARAM_BENDCOST = (unsigned char)'b',
-    PARAM_XCOST = (unsigned char)'x',
-    PARAM_YCOST = (unsigned char)'y',
-    PARAM_ZCOST = (unsigned char)'z',
+    PARAM_XCOST    = (unsigned char)'x',
+    PARAM_YCOST    = (unsigned char)'y',
+    PARAM_ZCOST    = (unsigned char)'z',
 };
 
-enum param_defaults
-{
+enum param_defaults {
     PARAM_DEFAULT_BENDCOST = 1,
-    PARAM_DEFAULT_XCOST = 1,
-    PARAM_DEFAULT_YCOST = 1,
-    PARAM_DEFAULT_ZCOST = 2,
+    PARAM_DEFAULT_XCOST    = 1,
+    PARAM_DEFAULT_YCOST    = 1,
+    PARAM_DEFAULT_ZCOST    = 2,
 };
 
-char *global_inputFile = NULL;
+bool_t global_doPrint = FALSE;
+char* global_inputFile = NULL;
 long global_params[256]; /* 256 = ascii limit */
+
 
 /* =============================================================================
  * displayUsage
  * =============================================================================
  */
-static void displayUsage(const char *appName)
-{
+static void displayUsage (const char* appName){
     printf("Usage: %s [options]\n", appName);
     puts("\nOptions:                            (defaults)\n");
     printf("    b <INT>    [b]end cost          (%i)\n", PARAM_DEFAULT_BENDCOST);
@@ -98,123 +96,80 @@ static void displayUsage(const char *appName)
     exit(1);
 }
 
+
 /* =============================================================================
  * setDefaultParams
  * =============================================================================
  */
-static void setDefaultParams()
-{
+static void setDefaultParams (){
     global_params[PARAM_BENDCOST] = PARAM_DEFAULT_BENDCOST;
-    global_params[PARAM_XCOST] = PARAM_DEFAULT_XCOST;
-    global_params[PARAM_YCOST] = PARAM_DEFAULT_YCOST;
-    global_params[PARAM_ZCOST] = PARAM_DEFAULT_ZCOST;
+    global_params[PARAM_XCOST]    = PARAM_DEFAULT_XCOST;
+    global_params[PARAM_YCOST]    = PARAM_DEFAULT_YCOST;
+    global_params[PARAM_ZCOST]    = PARAM_DEFAULT_ZCOST;
 }
 
-/* =============================================================================
- * fileValid
- * =============================================================================
- */
-static int fileValid(char *fileName)
-{
-    FILE *fp = fopen(fileName, "r");
-    if (fp == NULL)
-        return FALSE;
-
-    fclose(fp);
-    return TRUE;
-}
 
 /* =============================================================================
  * parseArgs
  * =============================================================================
  */
-static void parseArgs(long argc, char *const argv[])
-{
-    int i;
+static void parseArgs (long argc, char* const argv[]){
+    long i;
     long opt;
-    int fileFound = FALSE;
 
     opterr = 0;
 
     setDefaultParams();
 
-    while ((opt = getopt(argc, argv, "hb:x:y:z:")) != -1)
-    {
-        switch (opt)
-        {
-        case 'b':
-        case 'x':
-        case 'y':
-        case 'z':
-            global_params[(unsigned char)opt] = atol(optarg);
-            break;
-        case '?':
-        case 'h':
-        default:
-            opterr++;
-            break;
+    while ((opt = getopt(argc, argv, "hb:px:y:z:")) != -1) {
+        switch (opt) {
+            case 'b':
+            case 'x':
+            case 'y':
+            case 'z':
+                global_params[(unsigned char)opt] = atol(optarg);
+                break;
+            case 'p':
+                global_doPrint = TRUE;
+                break;
+            case '?':
+            case 'h':
+            default:
+                opterr++;
+                break;
         }
     }
 
-    for (i = optind; i < argc; i++)
-    {
-        if (!fileFound && fileValid(argv[i]))
-        {
-            global_inputFile = argv[i];
-            fileFound = TRUE;
-        }
-        else
-        {
-            fprintf(stderr, "Non-option argument: %s\n", argv[i]);
-            opterr++;
-        }
+    for (i = optind; i < argc; i++) {
+        fprintf(stderr, "Non-option argument: %s\n", argv[i]);
+        opterr++;
     }
 
-    if (opterr)
-    {
+    if (opterr) {
         displayUsage(argv[0]);
     }
-    if (!fileFound)
-    {
-        printf("Input File is required\n");
-        exit(1);
-    }
 }
+
 
 /* =============================================================================
  * main
  * =============================================================================
  */
-int main(int argc, char **argv)
-{
+int main(int argc, char** argv){
     /*
      * Initialization
      */
-    parseArgs(argc, (char **const)argv);
-
-    /* generate output file */
-    char *outputFile = strConcatenate(global_inputFile, ".res");
-    FILE *outputFilePointer = fopen(outputFile, "r");
-    if (outputFilePointer != NULL)
-    {
-        char *oldoutputFile = strConcatenate(outputFile, ".old");
-        rename(outputFile, oldoutputFile);
-        fclose(outputFilePointer);
-        free(oldoutputFile);
-    }
-    outputFilePointer = fopen(outputFile, "w");
-    free(outputFile);
-
-    maze_t *mazePtr = maze_alloc();
+    parseArgs(argc, (char** const)argv);
+    maze_t* mazePtr = maze_alloc();
     assert(mazePtr);
 
-    long numPathToRoute = maze_read(mazePtr, global_inputFile, outputFilePointer);
-    router_t *routerPtr = router_alloc(global_params[PARAM_XCOST],
+    long numPathToRoute = maze_read(mazePtr);
+    router_t* routerPtr = router_alloc(global_params[PARAM_XCOST],
                                        global_params[PARAM_YCOST],
                                        global_params[PARAM_ZCOST],
                                        global_params[PARAM_BENDCOST]);
     assert(routerPtr);
-    list_t *pathVectorListPtr = list_alloc(NULL);
+    list_t* pathVectorListPtr = list_alloc(NULL);
     assert(pathVectorListPtr);
 
     router_solve_arg_t routerArg = {routerPtr, mazePtr, pathVectorListPtr};
@@ -229,42 +184,41 @@ int main(int argc, char **argv)
     long numPathRouted = 0;
     list_iter_t it;
     list_iter_reset(&it, pathVectorListPtr);
-    while (list_iter_hasNext(&it, pathVectorListPtr))
-    {
-        vector_t *pathVectorPtr = (vector_t *)list_iter_next(&it, pathVectorListPtr);
+    while (list_iter_hasNext(&it, pathVectorListPtr)) {
+        vector_t* pathVectorPtr = (vector_t*)list_iter_next(&it, pathVectorListPtr);
         numPathRouted += vector_getSize(pathVectorPtr);
-    }
-    fprintf(outputFilePointer, "Paths routed    = %li\n", numPathRouted);
-    fprintf(outputFilePointer, "Elapsed time    = %f seconds\n", TIMER_DIFF_SECONDS(startTime, stopTime));
+	}
+    printf("Paths routed    = %li\n", numPathRouted);
+    printf("Elapsed time    = %f seconds\n", TIMER_DIFF_SECONDS(startTime, stopTime));
+
 
     /*
      * Check solution and clean up
      */
     assert(numPathRouted <= numPathToRoute);
-    bool_t status = maze_checkPaths(mazePtr, pathVectorListPtr, outputFilePointer);
+    bool_t status = maze_checkPaths(mazePtr, pathVectorListPtr, global_doPrint);
     assert(status == TRUE);
-    fputs("Verification passed.\n", outputFilePointer);
-
-    fclose(outputFilePointer);
+    puts("Verification passed.");
 
     maze_free(mazePtr);
     router_free(routerPtr);
 
     list_iter_reset(&it, pathVectorListPtr);
-    while (list_iter_hasNext(&it, pathVectorListPtr))
-    {
-        vector_t *pathVectorPtr = (vector_t *)list_iter_next(&it, pathVectorListPtr);
-        vector_t *v;
-        while ((v = vector_popBack(pathVectorPtr)))
-        {
+    while (list_iter_hasNext(&it, pathVectorListPtr)) {
+        vector_t* pathVectorPtr = (vector_t*)list_iter_next(&it, pathVectorListPtr);
+        vector_t* v;
+        while((v = vector_popBack(pathVectorPtr))) {
             // v stores pointers to longs stored elsewhere; no need to free them here
             vector_free(v);
         }
         vector_free(pathVectorPtr);
     }
     list_free(pathVectorListPtr);
+
+
     exit(0);
 }
+
 
 /* =============================================================================
  *
