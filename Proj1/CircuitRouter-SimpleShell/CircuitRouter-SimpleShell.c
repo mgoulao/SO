@@ -49,18 +49,18 @@ int main(int argc, char *argv[])
 {
     int numArgs, numChilds = 0, MAX_CHILDS = 0;
     char **argsVector = (char **)malloc(NUM_INPUTS * sizeof(char *));
-    char *buffer = (char *)malloc((BUFFER_SIZE) * sizeof(char));
+    char *buffer = (char *)malloc(BUFFER_SIZE * sizeof(char));
 
     if (argc > 1)
     {
         char *p;
-        long conv = strtol(argv[1], &p, 10);
+        long ret = strtol(argv[1], &p, 10);
 
         if (*p != '\0')
             printf("Invalid MAXCHILDREN\n");
         else
         {
-            MAX_CHILDS = conv;
+            MAX_CHILDS = ret;
             if (MAX_CHILDS < 1)
             {
                 printf("MAXCHILDREN must be positive\n");
@@ -72,21 +72,27 @@ int main(int argc, char *argv[])
     while (TRUE)
     {
         numArgs = readLineArguments(argsVector, NUM_INPUTS, buffer, BUFFER_SIZE);
-
-        if (!strcmp("run", argsVector[0]))
+        if (argsVector[0] == NULL)
+        {
+            printf("No command\n");
+        }
+        else if (!strcmp("run", argsVector[0]))
         {
             if (numArgs == 1)
             {
                 printf("Input file needed\n");
             }
-            else if (MAX_CHILDS != 0 && numChilds == MAX_CHILDS)
+            else
             {
-                int status, pid;
-                pid = wait(&status);
-                printChildExit(pid, status);
-                numChilds--;
+                if (MAX_CHILDS != 0 && numChilds == MAX_CHILDS)
+                {
+                    int status, pid;
+                    pid = wait(&status);
+                    printChildExit(pid, status);
+                    numChilds--;
+                }
+                runCommand(argsVector[1], &numChilds, MAX_CHILDS);
             }
-            runCommand(argsVector[1], &numChilds, MAX_CHILDS);
         }
         else if (!strcmp("exit", argsVector[0]))
         {
