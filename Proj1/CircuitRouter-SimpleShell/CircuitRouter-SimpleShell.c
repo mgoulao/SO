@@ -1,3 +1,10 @@
+/* =============================================================================
+ *
+ * CircuitRouter-SimpleShell.c
+ *
+ * =============================================================================
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,14 +14,23 @@
 #include "lib/types.h"
 #include "lib/commandlinereader.h"
 
-#define BUFFER_SIZE 80
+#define BUFFER_SIZE 100
 #define NUM_INPUTS 3
 
+
+/* =============================================================================
+ * printChildExit
+ * =============================================================================
+ */
 void printChildExit(int pid, int status)
 {
     printf("CHILD EXITED (PID=%d; return %s)\n", pid, (WSTOPSIG(status) == 0) ? "OK" : "NOK");
 }
 
+/* =============================================================================
+ * runCommand
+ * =============================================================================
+ */
 void runCommand(char *inputFile, int *numChilds, int MAX_CHILDS)
 {
     int pid;
@@ -34,6 +50,10 @@ void runCommand(char *inputFile, int *numChilds, int MAX_CHILDS)
     }
 }
 
+/* =============================================================================
+ * exitCommand
+ * =============================================================================
+ */
 void exitCommand(int numChilds)
 {
     int i, status, pid;
@@ -45,6 +65,10 @@ void exitCommand(int numChilds)
     printf("END\n");
 }
 
+/* =============================================================================
+ * main
+ * =============================================================================
+ */
 int main(int argc, char *argv[])
 {
     int numArgs, numChilds = 0, MAX_CHILDS = 0;

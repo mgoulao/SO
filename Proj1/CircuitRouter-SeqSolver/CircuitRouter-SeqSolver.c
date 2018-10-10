@@ -59,7 +59,6 @@
 #include "router.h"
 #include "lib/timer.h"
 #include "lib/types.h"
-#include "lib/commandlinereader.h"
 #include "lib/concatenate.h"
 
 enum param_types
