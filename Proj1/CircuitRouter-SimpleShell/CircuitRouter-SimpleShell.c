@@ -17,6 +17,10 @@
 #define BUFFER_SIZE 100
 #define NUM_INPUTS 3
 
+typedef struct
+{
+    int pid, status;
+} ChildProcess;
 
 /* =============================================================================
  * printChildExit
@@ -54,9 +58,14 @@ void runCommand(char *inputFile, int *numChilds, int MAX_CHILDS)
  * exitCommand
  * =============================================================================
  */
-void exitCommand(int numChilds)
+void exitCommand(int numChilds, ChildProcess *finishedProc, int nFinishedProc)
 {
     int i, status, pid;
+    for (i = 0; i < nFinishedProc; i++)
+    {
+        ChildProcess ps = finishedProc[i];
+        printChildExit(ps.pid, ps.status);
+    }
     for (i = 0; i < numChilds; i++)
     {
         pid = wait(&status);
@@ -71,9 +80,10 @@ void exitCommand(int numChilds)
  */
 int main(int argc, char *argv[])
 {
-    int numArgs, numChilds = 0, MAX_CHILDS = 0;
+    int numArgs, numChilds = 0, MAX_CHILDS = 0, nFinishedProc = 0;
     char **argsVector = (char **)malloc(NUM_INPUTS * sizeof(char *));
     char *buffer = (char *)malloc(BUFFER_SIZE * sizeof(char));
+    ChildProcess *finishedProc = (ChildProcess*)malloc(0);
 
     if (argc > 1)
     {
@@ -112,7 +122,11 @@ int main(int argc, char *argv[])
                 {
                     int status, pid;
                     pid = wait(&status);
-                    printChildExit(pid, status);
+                    finishedProc = (ChildProcess *)realloc(finishedProc, ++nFinishedProc * sizeof(ChildProcess));
+                    ChildProcess ps;
+                    ps.pid = pid;
+                    ps.status = status;
+                    finishedProc[nFinishedProc - 1] = ps;
                     numChilds--;
                 }
                 runCommand(argsVector[1], &numChilds, MAX_CHILDS);
@@ -120,7 +134,7 @@ int main(int argc, char *argv[])
         }
         else if (!strcmp("exit", argsVector[0]))
         {
-            exitCommand(numChilds);
+            exitCommand(numChilds, finishedProc, nFinishedProc);
             break;
         }
         else
@@ -132,6 +146,7 @@ int main(int argc, char *argv[])
     /* Clean up */
     free(argsVector);
     free(buffer);
+    free(finishedProc);
 
     return 0;
 }
