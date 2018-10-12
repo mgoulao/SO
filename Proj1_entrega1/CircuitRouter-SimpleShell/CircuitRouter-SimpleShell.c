@@ -28,7 +28,7 @@ typedef struct
  */
 void printChildExit(int pid, int status)
 {
-    printf("CHILD EXITED (PID=%d; return %s)\n", pid, (WIFEXITED(status) && WEXITSTATUS(status) == 0) ? "OK" : "NOK");
+    printf("CHILD EXITED (PID=%d; return %s)\n", pid, (WSTOPSIG(status) == 0) ? "OK" : "NOK");
 }
 
 /* =============================================================================

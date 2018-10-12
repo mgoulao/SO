@@ -175,7 +175,7 @@ static void parseArgs(long argc, char *const argv[])
     }
     if (!fileFound)
     {
-        fprintf(stderr, "Input File is required\n");
+        printf("Input File is required\n");
         exit(1);
     }
 }
