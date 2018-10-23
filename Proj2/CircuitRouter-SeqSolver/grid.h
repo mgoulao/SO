@@ -1,58 +1,36 @@
-/* =============================================================================
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * This code is an adaptation of the Lee algorithm's implementation originally included in the STAMP Benchmark
+ * by Stanford University.
  *
- * vector.h
+ * The original copyright notice is included below.
  *
- * =============================================================================
- *
+  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * Copyright (C) Stanford University, 2006.  All Rights Reserved.
  * Author: Chi Cao Minh
  *
  * =============================================================================
  *
- * For the license of bayes/sort.h and bayes/sort.c, please see the header
- * of the files.
- * 
- * ------------------------------------------------------------------------
- * 
- * For the license of kmeans, please see kmeans/LICENSE.kmeans
- * 
- * ------------------------------------------------------------------------
- * 
- * For the license of ssca2, please see ssca2/COPYRIGHT
- * 
- * ------------------------------------------------------------------------
- * 
- * For the license of lib/mt19937ar.c and lib/mt19937ar.h, please see the
- * header of the files.
- * 
- * ------------------------------------------------------------------------
- * 
- * For the license of lib/rbtree.h and lib/rbtree.c, please see
- * lib/LEGALNOTICE.rbtree and lib/LICENSE.rbtree
- * 
- * ------------------------------------------------------------------------
- * 
  * Unless otherwise noted, the following license applies to STAMP files:
- * 
+ *
  * Copyright (c) 2007, Stanford University
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- * 
+ *
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
- * 
+ *
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in
  *       the documentation and/or other materials provided with the
  *       distribution.
- * 
+ *
  *     * Neither the name of Stanford University nor the names of its
  *       contributors may be used to endorse or promote products derived
  *       from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY STANFORD UNIVERSITY ``AS IS'' AND ANY
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -66,115 +44,132 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
  * =============================================================================
+ *
+ * grid.h
+ *
+ * =============================================================================
  */
 
 
-#ifndef VECTOR_H
-#define VECTOR_H 1
+#ifndef GRID_H
+#define GRID_H 1
+
+#include <stdio.h>
+#include "lib/types.h"
+#include "lib/vector.h"
 
 
-#include "types.h"
+typedef struct grid {
+    long width;
+    long height;
+    long depth;
+    long* points;
+    long* points_unaligned;
+} grid_t;
 
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
-typedef struct vector {
-    long size;
-    long capacity;
-    void** elements;
-} vector_t;
+enum {
+    GRID_POINT_FULL  = -2L,
+    GRID_POINT_EMPTY = -1L
+};
 
 
 /* =============================================================================
- * vector_alloc
- * -- Returns NULL if failed
+ * grid_alloc
  * =============================================================================
  */
-vector_t*
-vector_alloc (long initCapacity);
+grid_t* grid_alloc (long width, long height, long depth);
 
 
 /* =============================================================================
- * vector_free
+ * grid_free
  * =============================================================================
  */
-void
-vector_free (vector_t* vectorPtr);
+void grid_free (grid_t* gridPtr);
 
 
 /* =============================================================================
- * vector_at
- * -- Returns NULL if failed
+ * grid_copy
  * =============================================================================
  */
-void*
-vector_at (vector_t* vectorPtr, long i);
+void grid_copy (grid_t* dstGridPtr, grid_t* srcGridPtr);
 
 
 /* =============================================================================
- * vector_pushBack
- * -- Returns FALSE if fail, else TRUE
+ * grid_isPointValid
  * =============================================================================
  */
-bool_t
-vector_pushBack (vector_t* vectorPtr, void* dataPtr);
+bool_t grid_isPointValid (grid_t* gridPtr, long x, long y, long z);
 
 
 /* =============================================================================
- * vector_popBack
- * -- Returns NULL if fail, else returns last element
+ * grid_getPointRef
  * =============================================================================
  */
-void*
-vector_popBack (vector_t* vectorPtr);
+long* grid_getPointRef (grid_t* gridPtr, long x, long y, long z);
 
 
 /* =============================================================================
- * vector_getSize
+ * grid_getPointIndices
  * =============================================================================
  */
-long
-vector_getSize (vector_t* vectorPtr);
+void grid_getPointIndices (grid_t* gridPtr, long* gridPointPtr, long* xPtr, long* yPtr, long* zPtr);
 
 
 /* =============================================================================
- * vector_clear
+ * grid_getPoint
  * =============================================================================
  */
-void
-vector_clear (vector_t* vectorPtr);
+long grid_getPoint (grid_t* gridPtr, long x, long y, long z);
 
 
 /* =============================================================================
- * vector_sort
+ * grid_isPointEmpty
  * =============================================================================
  */
-void
-vector_sort (vector_t* vectorPtr, int (*compare) (const void*, const void*));
+bool_t grid_isPointEmpty (grid_t* gridPtr, long x, long y, long z);
 
 
 /* =============================================================================
- * vector_copy
+ * grid_isPointFull
  * =============================================================================
  */
-bool_t
-vector_copy (vector_t* dstVectorPtr, vector_t* srcVectorPtr);
+bool_t grid_isPointFull (grid_t* gridPtr, long x, long y, long z);
 
 
-#ifdef __cplusplus
-}
-#endif
+/* =============================================================================
+ * grid_setPoint
+ * =============================================================================
+ */
+void grid_setPoint (grid_t* gridPtr, long x, long y, long z, long value);
 
 
-#endif /* VECTOR_H */
+/* =============================================================================
+ * grid_addPath
+ * =============================================================================
+ */
+void grid_addPath (grid_t* gridPtr, vector_t* pointVectorPtr);
+
+
+/* =============================================================================
+ * grid_addPath_Ptr
+ * =============================================================================
+ */
+void grid_addPath_Ptr (grid_t* gridPtr, vector_t* pointVectorPtr);
+
+
+/* =============================================================================
+ * grid_print
+ * =============================================================================
+ */
+void grid_print (grid_t* gridPtr, FILE *fp);
+
+
+#endif /* GRID_H */
 
 
 /* =============================================================================
  *
- * End of vector.h
+ * End of grid.c
  *
  * =============================================================================
  */

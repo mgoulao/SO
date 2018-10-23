@@ -150,10 +150,15 @@ static void addToGrid (grid_t* gridPtr, vector_t* vectorPtr, char* type){
  * =============================================================================
  */
 
-long maze_read (maze_t* mazePtr, char* fileInput, FILE* outputFilePointer){
-    
+long maze_read (maze_t* mazePtr, char * input, FILE * fp){
+    FILE* inputFile;
+    inputFile = fopen(input,"rt");
+    if(!inputFile){
+        fprintf(stderr, "Error: Could not read %s\n", input);
+        exit(EXIT_FAILURE);
+    }
     /*
-     * Parse input from stdin
+     * Parse input from inputFile
      */
     long lineNumber = 0;
     long height = -1;
@@ -164,10 +169,8 @@ long maze_read (maze_t* mazePtr, char* fileInput, FILE* outputFilePointer){
     vector_t* wallVectorPtr = mazePtr->wallVectorPtr;
     vector_t* srcVectorPtr = mazePtr->srcVectorPtr;
     vector_t* dstVectorPtr = mazePtr->dstVectorPtr;
-
-    FILE *fp = fopen(fileInput, "r");
     
-    while (fgets(line, sizeof(line), fp)) {
+    while (fgets(line, sizeof(line), inputFile)) {
         
         char code;
         long x1, y1, z1;
@@ -234,7 +237,7 @@ long maze_read (maze_t* mazePtr, char* fileInput, FILE* outputFilePointer){
         }
         
     } /* iterate over lines in input file */
-    fclose(fp);
+    
     
     /*
      * Initialize grid contents
@@ -250,8 +253,8 @@ long maze_read (maze_t* mazePtr, char* fileInput, FILE* outputFilePointer){
     addToGrid(gridPtr, wallVectorPtr, "wall");
     addToGrid(gridPtr, srcVectorPtr,  "source");
     addToGrid(gridPtr, dstVectorPtr,  "destination");
-    fprintf(outputFilePointer, "Maze dimensions = %li x %li x %li\n", width, height, depth);
-    fprintf(outputFilePointer, "Paths to route  = %li\n", list_getSize(workListPtr));
+    fprintf(fp, "Maze dimensions = %li x %li x %li\n", width, height, depth);
+    fprintf(fp, "Paths to route  = %li\n", list_getSize(workListPtr));
     
     /*
      * Initialize work queue
@@ -272,7 +275,7 @@ long maze_read (maze_t* mazePtr, char* fileInput, FILE* outputFilePointer){
  * maze_checkPaths
  * =============================================================================
  */
-bool_t maze_checkPaths (maze_t* mazePtr, list_t* pathVectorListPtr, FILE* outputFilePointer){
+bool_t maze_checkPaths (maze_t* mazePtr, list_t* pathVectorListPtr, FILE *fp, bool_t doPrintPaths){
     grid_t* gridPtr = mazePtr->gridPtr;
     long width  = gridPtr->width;
     long height = gridPtr->height;
@@ -361,7 +364,10 @@ bool_t maze_checkPaths (maze_t* mazePtr, list_t* pathVectorListPtr, FILE* output
         } /* iteratate over pathVector */
     } /* iterate over pathVectorList */
 
-    grid_print(testGridPtr, outputFilePointer);
+    if (doPrintPaths) {
+        fputs("\nRouted Maze:\n",fp);
+        grid_print(testGridPtr, fp);
+    }
 
     grid_free(testGridPtr);
 

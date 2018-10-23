@@ -1,58 +1,36 @@
-/* =============================================================================
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * This code is an adaptation of the Lee algorithm's implementation originally included in the STAMP Benchmark
+ * by Stanford University.
  *
- * pair.c
+ * The original copyright notice is included below.
  *
- * =============================================================================
- *
+  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * Copyright (C) Stanford University, 2006.  All Rights Reserved.
  * Author: Chi Cao Minh
  *
  * =============================================================================
  *
- * For the license of bayes/sort.h and bayes/sort.c, please see the header
- * of the files.
- * 
- * ------------------------------------------------------------------------
- * 
- * For the license of kmeans, please see kmeans/LICENSE.kmeans
- * 
- * ------------------------------------------------------------------------
- * 
- * For the license of ssca2, please see ssca2/COPYRIGHT
- * 
- * ------------------------------------------------------------------------
- * 
- * For the license of lib/mt19937ar.c and lib/mt19937ar.h, please see the
- * header of the files.
- * 
- * ------------------------------------------------------------------------
- * 
- * For the license of lib/rbtree.h and lib/rbtree.c, please see
- * lib/LEGALNOTICE.rbtree and lib/LICENSE.rbtree
- * 
- * ------------------------------------------------------------------------
- * 
  * Unless otherwise noted, the following license applies to STAMP files:
- * 
+ *
  * Copyright (c) 2007, Stanford University
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- * 
+ *
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
- * 
+ *
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in
  *       the documentation and/or other materials provided with the
  *       distribution.
- * 
+ *
  *     * Neither the name of Stanford University nor the names of its
  *       contributors may be used to endorse or promote products derived
  *       from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY STANFORD UNIVERSITY ``AS IS'' AND ANY
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -66,105 +44,69 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
  * =============================================================================
+ *
+ * maze.h
+ *
+ * =============================================================================
  */
 
 
-#include <stdlib.h>
-#include "pair.h"
+#ifndef MAZE_H
+#define MAZE_H 1
+
+
+#include "coordinate.h"
+#include "grid.h"
+#include "lib/list.h"
+#include "lib/pair.h"
+#include "lib/queue.h"
+#include "lib/types.h"
+#include "lib/vector.h"
+
+typedef struct maze {
+    grid_t* gridPtr;
+    queue_t* workQueuePtr;   /* contains source/destination pairs to route */
+    vector_t* wallVectorPtr; /* obstacles */
+    vector_t* srcVectorPtr;  /* sources */
+    vector_t* dstVectorPtr;  /* destinations */
+} maze_t;
 
 
 /* =============================================================================
- * pair_alloc
- * -- Returns NULL if failure
+ * maze_alloc
  * =============================================================================
  */
-pair_t*
-pair_alloc (void* firstPtr, void* secondPtr)
-{
-    pair_t* pairPtr;
-
-    pairPtr = (pair_t*)malloc(sizeof(pair_t));
-    if (pairPtr != NULL) {
-        pairPtr->firstPtr = firstPtr;
-        pairPtr->secondPtr = secondPtr;
-    }
-
-    return pairPtr;
-}
+maze_t* maze_alloc ();
 
 
 /* =============================================================================
- * pair_free
+ * maze_free
  * =============================================================================
  */
-void
-pair_free (pair_t* pairPtr)
-{
-    free(pairPtr);
-}
+void maze_free (maze_t* mazePtr);
 
 
 /* =============================================================================
- * pair_swap
- * -- Exchange 'firstPtr' and 'secondPtr'
+ * maze_read
+ * -- Return number of path to route
  * =============================================================================
  */
-void
-pair_swap (pair_t* pairPtr)
-{
-    void* tmpPtr = pairPtr->firstPtr;
-    pairPtr->firstPtr = pairPtr->secondPtr;
-    pairPtr->secondPtr = tmpPtr;
-}
+long maze_read (maze_t* mazePtr, char * input, FILE* fp);
 
 
 /* =============================================================================
- * TEST_PAIR
+ * maze_checkPaths
  * =============================================================================
  */
-#ifdef TEST_PAIR
+bool_t maze_checkPaths (maze_t* mazePtr, list_t* pathListPtr, FILE *fp, bool_t doPrintPaths);
 
 
-#include <assert.h>
-#include <stdio.h>
-
-
-int
-main ()
-{
-    pair_t* pairPtr;
-
-    puts("Starting...");
-
-    pairPtr = pair_alloc((void*)1, (void*)2);
-
-    assert((long)pairPtr->firstPtr == 1);
-    assert((long)pairPtr->secondPtr == 2);
-
-    pair_swap(pairPtr);
-
-    assert((long)pairPtr->firstPtr == 2);
-    assert((long)pairPtr->secondPtr == 1);
-
-    pair_swap(pairPtr);
-
-    assert((long)pairPtr->firstPtr == 1);
-    assert((long)pairPtr->secondPtr == 2);
-
-    pair_free(pairPtr);
-
-    puts("All tests passed.");
-
-    return 0;
-}
-
-
-#endif /* TEST_PAIR */
+#endif /* MAZE_H */
 
 
 /* =============================================================================
  *
- * End of pair.c
+ * End of maze.h
  *
  * =============================================================================
  */

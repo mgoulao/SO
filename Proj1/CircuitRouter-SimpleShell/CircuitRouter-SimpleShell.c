@@ -35,7 +35,7 @@ void printChildExit(int pid, int status)
  * runCommand
  * =============================================================================
  */
-void runCommand(char *inputFile, int *numChilds, int MAX_CHILDS)
+void runCommand(char *inputFile, int *numChilds, int MAX_CHILDS, int *psId)
 {
     int pid;
 
@@ -46,12 +46,13 @@ void runCommand(char *inputFile, int *numChilds, int MAX_CHILDS)
         printf("Unable to fork\n");
         return;
     }
-
     (*numChilds)++;
     if (pid == 0)
     {
+        printf("id: %d, PID: %d\n", *psId, getpid());
         execl("../CircuitRouter-SeqSolver/CircuitRouter-SeqSolver", "./CircuitRouter-SeqSolver", inputFile, (char *)NULL);
     }
+    (*psId)++;
 }
 
 /* =============================================================================
@@ -80,10 +81,10 @@ void exitCommand(int numChilds, ChildProcess *finishedProc, int nFinishedProc)
  */
 int main(int argc, char *argv[])
 {
-    int numArgs, numChilds = 0, MAX_CHILDS = 0, nFinishedProc = 0;
+    int numArgs, numChilds = 0, MAX_CHILDS = 0, nFinishedProc = 0, psId = 10;
     char **argsVector = (char **)malloc(NUM_INPUTS * sizeof(char *));
     char *buffer = (char *)malloc(BUFFER_SIZE * sizeof(char));
-    ChildProcess *finishedProc = (ChildProcess*)malloc(0);
+    ChildProcess *finishedProc = (ChildProcess *)malloc(0);
 
     if (argc > 1)
     {
@@ -129,7 +130,7 @@ int main(int argc, char *argv[])
                     finishedProc[nFinishedProc - 1] = ps;
                     numChilds--;
                 }
-                runCommand(argsVector[1], &numChilds, MAX_CHILDS);
+                runCommand(argsVector[1], &numChilds, MAX_CHILDS, &psId);
             }
         }
         else if (!strcmp("exit", argsVector[0]))
