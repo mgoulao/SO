@@ -14,8 +14,8 @@ vgcore*
 .vscode
 
 #Project Output files
-*.txt.res
-*.txt.res.old
+*.res
+*.old
 
 
 
