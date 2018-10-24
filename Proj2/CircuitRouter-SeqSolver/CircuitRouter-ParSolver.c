@@ -58,6 +58,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <pthread.h>
 #include "lib/list.h"
 #include "maze.h"
 #include "router.h"
@@ -182,6 +183,31 @@ FILE * outputFile() {
 
 
 /* =============================================================================
+ * routerSolvePar
+ * =============================================================================
+ */
+
+void routerSolvePar(router_solve_arg_t routerArg) {
+    pthread_t tid[global_params[PARAM_T]];
+    int i;
+
+    //Create threads
+    for(i = 0; i < global_params[PARAM_T]; i++) {
+        if (pthread_create(tid[i], 0, router_solve, (void *) &routerArg) != 0) {
+            perror("Error creating thread");
+            exit(1);
+        } else
+            printf("Tarefa criada %ld\n", tid[i]);
+    }
+
+    // Wait for the threads
+    for(i = 0; i < global_params[PARAM_T]; i++) {
+        pthread_join(tid[i], NULL);
+    }
+}
+
+
+/* =============================================================================
  * main
  * =============================================================================
  */
@@ -206,7 +232,9 @@ int main(int argc, char** argv){
     TIMER_T startTime;
     TIMER_READ(startTime);
 
-    router_solve((void *)&routerArg);
+    routerSolvePar(routerArg); 
+
+    //router_solve((void *)&routerArg);
 
     TIMER_T stopTime;
     TIMER_READ(stopTime);

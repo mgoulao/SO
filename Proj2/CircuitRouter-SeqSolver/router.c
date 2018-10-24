@@ -311,6 +311,8 @@ void router_solve (void* argPtr){
      * Iterate over work list to route each path. This involves an
      * 'expansion' and 'traceback' phase for each source/destination pair.
      */
+
+    
     while (1) {
 
         pair_t* coordinatePairPtr;
