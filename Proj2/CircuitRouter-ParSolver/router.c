@@ -298,9 +298,9 @@ void* router_solve (void* args){
     pthread_mutex_t* globalMutex = routerArgs->globalMutex;
     void * argPtr = routerArgs->routerArg;
 
-    printf("%d\n", globalMutex);
+    //printf("%d\n", globalMutex);
     pthread_mutex_lock(globalMutex);
-    printf("--start %ld\n", pthread_self());
+    //printf("--start %ld\n", pthread_self());
 
     router_solve_arg_t* routerArgPtr = (router_solve_arg_t*)argPtr;
     router_t* routerPtr = routerArgPtr->routerPtr;
@@ -368,7 +368,7 @@ void* router_solve (void* args){
     grid_free(myGridPtr);
     queue_free(myExpansionQueuePtr);
 
-    printf("--end %ld\n", pthread_self());
+    //printf("--end %ld\n", pthread_self());
     pthread_mutex_unlock(globalMutex);
 
     return NULL;

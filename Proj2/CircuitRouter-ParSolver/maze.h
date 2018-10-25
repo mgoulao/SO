@@ -45,67 +45,68 @@
  *
  * =============================================================================
  *
- * router.h
+ * maze.h
  *
  * =============================================================================
  */
 
 
-#ifndef ROUTER_H
-#define ROUTER_H 1
+#ifndef MAZE_H
+#define MAZE_H 1
 
 
+#include "coordinate.h"
 #include "grid.h"
-#include "maze.h"
+#include "lib/list.h"
+#include "lib/pair.h"
+#include "lib/queue.h"
+#include "lib/types.h"
 #include "lib/vector.h"
 
-typedef struct router {
-    long xCost;
-    long yCost;
-    long zCost;
-    long bendCost;
-} router_t;
-
-typedef struct router_solve_arg {
-    router_t* routerPtr;
-    maze_t* mazePtr;
-    list_t* pathVectorListPtr;
-} router_solve_arg_t;
+typedef struct maze {
+    grid_t* gridPtr;
+    queue_t* workQueuePtr;   /* contains source/destination pairs to route */
+    vector_t* wallVectorPtr; /* obstacles */
+    vector_t* srcVectorPtr;  /* sources */
+    vector_t* dstVectorPtr;  /* destinations */
+} maze_t;
 
 
 /* =============================================================================
- * router_alloc
+ * maze_alloc
  * =============================================================================
  */
-router_t* router_alloc (long xCost, long yCost, long zCost, long bendCost);
+maze_t* maze_alloc ();
 
 
 /* =============================================================================
- * router_free
+ * maze_free
  * =============================================================================
  */
-void router_free (router_t* routerPtr);
+void maze_free (maze_t* mazePtr);
 
 
 /* =============================================================================
- * router_solve
+ * maze_read
+ * -- Return number of path to route
  * =============================================================================
  */
-void* router_solve (void* args);
+long maze_read (maze_t* mazePtr, char * input, FILE* fp);
 
 
-typedef struct {
-    pthread_mutex_t* globalMutex;
-    void * routerArg;
-} routerSolveArgs;
+/* =============================================================================
+ * maze_checkPaths
+ * =============================================================================
+ */
+bool_t maze_checkPaths (maze_t* mazePtr, list_t* pathListPtr, FILE *fp, bool_t doPrintPaths);
 
 
-#endif /* ROUTER_H */
+#endif /* MAZE_H */
 
 
 /* =============================================================================
  *
- * End of router.h
+ * End of maze.h
  *
  * =============================================================================
  */

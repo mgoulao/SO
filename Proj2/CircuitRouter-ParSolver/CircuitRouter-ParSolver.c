@@ -91,13 +91,12 @@ long global_params[256]; /* 256 = ascii limit */
  * =============================================================================
  */
 static void displayUsage (const char* appName){
-    printf("Usage: %s [options] input_filename\n", appName);
+    printf("Usage: %s [options] -t number_threads input_filename\n", appName);
     puts("\nOptions:                            (defaults)\n");
     printf("    b <INT>    [b]end cost          (%i)\n", PARAM_DEFAULT_BENDCOST);
     printf("    x <UINT>   [x] movement cost    (%i)\n", PARAM_DEFAULT_XCOST);
     printf("    y <UINT>   [y] movement cost    (%i)\n", PARAM_DEFAULT_YCOST);
     printf("    z <UINT>   [z] movement cost    (%i)\n", PARAM_DEFAULT_ZCOST);
-    printf("    t <UINT>   [z] thread number    (%i)\n", PARAM_DEFAULT_T);
     printf("    h          [h]elp message       (false)\n");
     exit(1);
 }
@@ -187,13 +186,17 @@ FILE * outputFile() {
  * =============================================================================
  */
 
-void routerSolvePar(router_solve_arg_t routerArg) {
+void routerSolvePar(void* routerArg) {
     pthread_t tid[global_params[PARAM_T]];
     int i;
+    pthread_mutex_t globalMutex;
+    //Create mutex
+    pthread_mutex_init(&globalMutex, NULL);
 
+    routerSolveArgs args = {&globalMutex, routerArg};
     //Create threads
     for(i = 0; i < global_params[PARAM_T]; i++) {
-        if (pthread_create(tid[i], 0, router_solve, (void *) &routerArg) != 0) {
+        if (pthread_create(&tid[i], 0, router_solve,(void *) &args) != 0) {
             perror("Error creating thread");
             exit(1);
         } else
@@ -204,6 +207,10 @@ void routerSolvePar(router_solve_arg_t routerArg) {
     for(i = 0; i < global_params[PARAM_T]; i++) {
         pthread_join(tid[i], NULL);
     }
+    
+    pthread_mutex_destroy(&globalMutex);
+
+
 }
 
 
@@ -232,7 +239,7 @@ int main(int argc, char** argv){
     TIMER_T startTime;
     TIMER_READ(startTime);
 
-    routerSolvePar(routerArg); 
+    routerSolvePar((void *)&routerArg); 
 
     //router_solve((void *)&routerArg);
 
