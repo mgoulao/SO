@@ -91,14 +91,7 @@ void router_free (router_t* routerPtr);
  * router_solve
  * =============================================================================
  */
-void* router_solve (void* args);
-
-
-typedef struct {
-    pthread_mutex_t* globalMutex;
-    void * routerArg;
-} routerSolveArgs;
-
+void router_solve (void* argPtr);
 
 #endif /* ROUTER_H */
 

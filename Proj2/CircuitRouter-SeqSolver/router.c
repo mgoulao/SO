@@ -293,15 +293,7 @@ static vector_t* doTraceback (grid_t* gridPtr, grid_t* myGridPtr, coordinate_t* 
  * router_solve
  * =============================================================================
  */
-void* router_solve (void* args){
-    routerSolveArgs* routerArgs = (routerSolveArgs*)args;
-    pthread_mutex_t* globalMutex = routerArgs->globalMutex;
-    void * argPtr = routerArgs->routerArg;
-
-    printf("%d\n", globalMutex);
-    pthread_mutex_lock(globalMutex);
-    printf("--start %ld\n", pthread_self());
-
+void router_solve (void* argPtr){
     router_solve_arg_t* routerArgPtr = (router_solve_arg_t*)argPtr;
     router_t* routerPtr = routerArgPtr->routerPtr;
     maze_t* mazePtr = routerArgPtr->mazePtr;
@@ -367,11 +359,6 @@ void* router_solve (void* args){
 
     grid_free(myGridPtr);
     queue_free(myExpansionQueuePtr);
-
-    printf("--end %ld\n", pthread_self());
-    pthread_mutex_unlock(globalMutex);
-
-    return NULL;
 }
 
 

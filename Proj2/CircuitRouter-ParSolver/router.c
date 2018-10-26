@@ -302,6 +302,9 @@ void* router_solve (void* args){
     pthread_mutex_lock(globalMutex);
     //printf("--start %ld\n", pthread_self());
 
+    /**
+     * Potencial zona critica 1 
+    */
     router_solve_arg_t* routerArgPtr = (router_solve_arg_t*)argPtr;
     router_t* routerPtr = routerArgPtr->routerPtr;
     maze_t* mazePtr = routerArgPtr->mazePtr;
@@ -314,6 +317,10 @@ void* router_solve (void* args){
     assert(myGridPtr);
     long bendCost = routerPtr->bendCost;
     queue_t* myExpansionQueuePtr = queue_alloc(-1);
+
+    /**
+     * Fim Potencial zona critica 1 
+    */
 
     /*
      * Iterate over work list to route each path. This involves an

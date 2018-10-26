@@ -3,9 +3,18 @@
 maxThreads=$1
 inputFile=$2
 
+if [ -z "$maxThreads" ]; then
+	echo "Falta Numero de threads"
+	exit
+fi
+
+if [ -z "$inputFile" ]; then
+	echo "Falta inputFile"
+	exit
+fi
+
 outputFile="$inputFile.res"
 csvFile="$inputFile.speedups.csv"
-
 
 echo "#threads,exec_time,speedup" > $csvFile
 
@@ -23,8 +32,3 @@ do
 	speedup=$(echo "scale=6; ${tSequencial}/${tParalela}" | bc)
 	echo $i,$tParalela,$speedup >> $csvFile
 done
-
-#seqTime=10
-#$parTime=5
-#speedup=$(echo "scale=6; ${seqTime}/${parTime}" | bc)
-#echo Speedup = ${speedup}
