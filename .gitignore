@@ -16,6 +16,7 @@ vgcore*
 #Project Output files
 *.res
 *.old
+*.csv
 
 
 

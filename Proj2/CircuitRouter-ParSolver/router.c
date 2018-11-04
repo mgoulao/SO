@@ -296,10 +296,14 @@ static vector_t* doTraceback (grid_t* gridPtr, grid_t* myGridPtr, coordinate_t* 
 void* router_solve (void* args){
     routerSolveArgs* routerArgs = (routerSolveArgs*)args;
     pthread_mutex_t* globalMutex = routerArgs->globalMutex;
+    pthread_mutex_t* gridMutex = routerArgs->gridMutex;
+    pthread_mutex_t* queueMutex = routerArgs->queueMutex;
+    pthread_mutex_t* pathVectorListMutex = routerArgs->pathVectorListMutex;
     void * argPtr = routerArgs->routerArg;
 
     //printf("%d\n", globalMutex);
-    pthread_mutex_lock(globalMutex);
+    //pthread_mutex_lock(globalMutex);
+    //TODO: - verify return
     //printf("--start %ld\n", pthread_self());
 
     /**
@@ -331,10 +335,13 @@ void* router_solve (void* args){
     while (1) {
 
         pair_t* coordinatePairPtr;
-        if (queue_isEmpty(workQueuePtr)) {
+        if (queue_isEmpty(workQueuePtr)) { //TODO: analisar melhor esta linha
             coordinatePairPtr = NULL;
         } else {
+            pthread_mutex_lock(queueMutex);
+            // FIXME: ADD verification
             coordinatePairPtr = (pair_t*)queue_pop(workQueuePtr);
+            pthread_mutex_unlock(queueMutex);
         }
         if (coordinatePairPtr == NULL) {
             break;
@@ -348,15 +355,17 @@ void* router_solve (void* args){
         bool_t success = FALSE;
         vector_t* pointVectorPtr = NULL;
 
-        grid_copy(myGridPtr, gridPtr); /* create a copy of the grid, over which the expansion and trace back phases will be executed. */
-        if (doExpansion(routerPtr, myGridPtr, myExpansionQueuePtr,
-                         srcPtr, dstPtr)) {
-            pointVectorPtr = doTraceback(gridPtr, myGridPtr, dstPtr, bendCost);
-            if (pointVectorPtr) {
-                grid_addPath_Ptr(gridPtr, pointVectorPtr);
+        while(!TRUE) {
 
-                success = TRUE;
+            grid_copy(myGridPtr, gridPtr); /* create a copy of the grid, over which the expansion and trace back phases will be executed. */
+            if (doExpansion(routerPtr, myGridPtr, myExpansionQueuePtr,
+                            srcPtr, dstPtr)) {
+                pointVectorPtr = doTraceback(gridPtr, myGridPtr, dstPtr, bendCost);
+                if (pointVectorPtr) {
+                    success = grid_addPath_Ptr(gridPtr, pointVectorPtr, gridMutex);
+                }
             }
+
         }
 
         if (success) {
@@ -370,13 +379,15 @@ void* router_solve (void* args){
      * Add my paths to global list
      */
     list_t* pathVectorListPtr = routerArgPtr->pathVectorListPtr;
+    pthread_mutex_lock(pathVectorListMutex);  // FIXME: ADD verification
     list_insert(pathVectorListPtr, (void*)myPathVectorPtr);
+    pthread_mutex_unlock(pathVectorListMutex);
 
     grid_free(myGridPtr);
     queue_free(myExpansionQueuePtr);
 
     //printf("--end %ld\n", pthread_self());
-    pthread_mutex_unlock(globalMutex);
+    //pthread_mutex_unlock(globalMutex);
 
     return NULL;
 }

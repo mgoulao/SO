@@ -96,6 +96,9 @@ void* router_solve (void* args);
 
 typedef struct {
     pthread_mutex_t* globalMutex;
+    pthread_mutex_t* gridMutex;
+    pthread_mutex_t* queueMutex;
+    pthread_mutex_t* pathVectorListMutex;
     void * routerArg;
 } routerSolveArgs;
 

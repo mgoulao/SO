@@ -78,7 +78,7 @@ enum param_defaults {
     PARAM_DEFAULT_XCOST    = 1,
     PARAM_DEFAULT_YCOST    = 1,
     PARAM_DEFAULT_ZCOST    = 2,
-    PARAM_DEFAULT_T    = 1,
+    PARAM_DEFAULT_T    = -1,
 };
 
 bool_t global_doPrint = TRUE;
@@ -146,6 +146,12 @@ static void parseArgs (long argc, char* const argv[]){
         }
     }
 
+    if(global_params[PARAM_T] == -1) {
+        fprintf(stderr, "Missing thread number\n");
+        displayUsage(argv[0]);
+        exit(1);
+    }
+
     if (optind >= argc) {
         fprintf(stderr, "Missing input file\n");
         displayUsage(argv[0]);
@@ -190,10 +196,17 @@ void routerSolvePar(void* routerArg) {
     pthread_t tid[global_params[PARAM_T]];
     int i;
     pthread_mutex_t globalMutex;
+    pthread_mutex_t gridMutex;
+    pthread_mutex_t queueMutex;
+    pthread_mutex_t pathVectorListMutex;
     //Create mutex
-    pthread_mutex_init(&globalMutex, NULL);
+    pthread_mutex_init(&globalMutex, NULL); // FIXME: ADD verifications
+    pthread_mutex_init(&gridMutex, NULL);
+    pthread_mutex_init(&queueMutex, NULL);
+    pthread_mutex_init(&pathVectorListMutex, NULL);
 
-    routerSolveArgs args = {&globalMutex, routerArg};
+    routerSolveArgs args = {&globalMutex, &globalMutex, &queueMutex, 
+                            &pathVectorListMutex, routerArg};
     //Create threads
     for(i = 0; i < global_params[PARAM_T]; i++) {
         if (pthread_create(&tid[i], 0, router_solve,(void *) &args) != 0) {
