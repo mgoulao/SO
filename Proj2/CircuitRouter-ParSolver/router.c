@@ -302,7 +302,7 @@ void* router_solve (void* args){
     void * argPtr = routerArgs->routerArg;
 
     //printf("%d\n", globalMutex);
-    //pthread_mutex_lock(globalMutex);
+    pthread_mutex_lock(globalMutex);
     //TODO: - verify return
     //printf("--start %ld\n", pthread_self());
 
@@ -338,10 +338,15 @@ void* router_solve (void* args){
         if (queue_isEmpty(workQueuePtr)) { //TODO: analisar melhor esta linha
             coordinatePairPtr = NULL;
         } else {
-            pthread_mutex_lock(queueMutex);
-            // FIXME: ADD verification
+            /* if (pthread_mutex_lock(queueMutex) != 0) {
+                perror("Error lock queue mutex");
+                exit(EXIT_FAILURE);
+            } */
             coordinatePairPtr = (pair_t*)queue_pop(workQueuePtr);
-            pthread_mutex_unlock(queueMutex);
+            /* if(pthread_mutex_unlock(queueMutex)) {
+                perror("Error unlock queue mutex");
+                exit(EXIT_FAILURE);
+            } */
         }
         if (coordinatePairPtr == NULL) {
             break;
@@ -350,23 +355,30 @@ void* router_solve (void* args){
         coordinate_t* srcPtr = coordinatePairPtr->firstPtr;
         coordinate_t* dstPtr = coordinatePairPtr->secondPtr;
 
+
         pair_free(coordinatePairPtr);
 
         bool_t success = FALSE;
+        bool_t path = FALSE;
         vector_t* pointVectorPtr = NULL;
+        
+        printf("%ld \n", srcPtr->x);
 
-        while(!TRUE) {
-
+        do {
             grid_copy(myGridPtr, gridPtr); /* create a copy of the grid, over which the expansion and trace back phases will be executed. */
             if (doExpansion(routerPtr, myGridPtr, myExpansionQueuePtr,
                             srcPtr, dstPtr)) {
                 pointVectorPtr = doTraceback(gridPtr, myGridPtr, dstPtr, bendCost);
                 if (pointVectorPtr) {
-                    success = grid_addPath_Ptr(gridPtr, pointVectorPtr, gridMutex);
+                    path = grid_addPath_Ptr(gridPtr, pointVectorPtr, gridMutex);
+                    success = TRUE;
                 }
             }
+            /* printf("%ld \n", srcPtr->x);
+            printf("pointvector: %ld\n", pointVectorPtr);
+            printf("2-> %ld\n", vector_getSize(pointVectorPtr)); */
+        } while(!path);
 
-        }
 
         if (success) {
             bool_t status = vector_pushBack(myPathVectorPtr,(void*)pointVectorPtr);
@@ -387,7 +399,7 @@ void* router_solve (void* args){
     queue_free(myExpansionQueuePtr);
 
     //printf("--end %ld\n", pthread_self());
-    //pthread_mutex_unlock(globalMutex);
+    pthread_mutex_unlock(globalMutex);
 
     return NULL;
 }

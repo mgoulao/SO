@@ -175,7 +175,7 @@ FILE * outputFile() {
         sprintf(old_outputFile, "%s.res.old", global_inputFile);
         if (rename(result_outputFile, old_outputFile) == -1) {
             perror("Error renaming output file");
-            exit(EXIT_FAILURE);;
+            exit(EXIT_FAILURE);
         }
     }
     fp = fopen(result_outputFile, "wt");
@@ -205,24 +205,30 @@ void routerSolvePar(void* routerArg) {
     pthread_mutex_init(&queueMutex, NULL);
     pthread_mutex_init(&pathVectorListMutex, NULL);
 
-    routerSolveArgs args = {&globalMutex, &globalMutex, &queueMutex, 
+    routerSolveArgs args = {&globalMutex, &gridMutex, &queueMutex, 
                             &pathVectorListMutex, routerArg};
     //Create threads
     for(i = 0; i < global_params[PARAM_T]; i++) {
         if (pthread_create(&tid[i], 0, router_solve,(void *) &args) != 0) {
             perror("Error creating thread");
             exit(1);
-        } else
-            printf("Tarefa criada %ld\n", tid[i]);
+        }
     }
 
     // Wait for the threads
     for(i = 0; i < global_params[PARAM_T]; i++) {
-        pthread_join(tid[i], NULL);
+        int ret = pthread_join(tid[i], NULL);
+        if(ret != 0) {
+            //ASK: O que fazer neste caso dar exit ou detetar o problema
+            perror("Error pthread join");
+        }
     }
     
+    //ASK: Necessario verificar
     pthread_mutex_destroy(&globalMutex);
-
+    pthread_mutex_destroy(&gridMutex);
+    pthread_mutex_destroy(&queueMutex);
+    pthread_mutex_destroy(&pathVectorListMutex);
 
 }
 
