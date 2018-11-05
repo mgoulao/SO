@@ -360,11 +360,11 @@ void* router_solve (void* args){
 
         bool_t success = FALSE;
         bool_t path = FALSE;
-        vector_t* pointVectorPtr = NULL;
         
         printf("%ld \n", srcPtr->x);
 
-        do {
+        /* do { */
+            vector_t* pointVectorPtr = NULL;
             grid_copy(myGridPtr, gridPtr); /* create a copy of the grid, over which the expansion and trace back phases will be executed. */
             if (doExpansion(routerPtr, myGridPtr, myExpansionQueuePtr,
                             srcPtr, dstPtr)) {
@@ -374,10 +374,10 @@ void* router_solve (void* args){
                     success = TRUE;
                 }
             }
-            /* printf("%ld \n", srcPtr->x);
-            printf("pointvector: %ld\n", pointVectorPtr);
-            printf("2-> %ld\n", vector_getSize(pointVectorPtr)); */
-        } while(!path);
+             printf("pointvector: %ld\n", pointVectorPtr);
+            printf("2-> %ld\n", vector_getSize(pointVectorPtr)); 
+            /* printf("%ld \n", srcPtr->x);*/
+        /* } while(!path) */;
 
 
         if (success) {
