@@ -222,11 +222,10 @@ bool_t grid_addPath_Ptr (grid_t* gridPtr, vector_t* pointVectorPtr, pthread_mute
     long n = vector_getSize(pointVectorPtr);
 
     // TODO: Change to line lock and not the all grid
-    printf("1-> %d\n", n);
-    /* if(pthread_mutex_lock(gridMutex) != 0) {
+    if(pthread_mutex_lock(gridMutex) != 0) {
         perror("Error lock grid mutex\n");
         exit(EXIT_FAILURE);
-    } */
+    }
     for (i = 1; i < (n-1); i++) {
         long* gridPointPtr = (long*)vector_at(pointVectorPtr, i);
         if((*gridPointPtr) == GRID_POINT_FULL) {
@@ -240,8 +239,8 @@ bool_t grid_addPath_Ptr (grid_t* gridPtr, vector_t* pointVectorPtr, pthread_mute
         *gridPointPtr = GRID_POINT_FULL; 
     }
 
-/*     pthread_mutex_unlock(gridMutex);
- */
+    pthread_mutex_unlock(gridMutex);
+
     return TRUE;
 }
 

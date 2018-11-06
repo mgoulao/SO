@@ -205,6 +205,9 @@ void routerSolvePar(void* routerArg) {
     pthread_mutex_init(&queueMutex, NULL);
     pthread_mutex_init(&pathVectorListMutex, NULL);
 
+    router_solve_arg_t* t = (router_solve_arg_t*)routerArg;
+    printf("%d\n", t->mazePtr->gridPtr->width);
+
     routerSolveArgs args = {&globalMutex, &gridMutex, &queueMutex, 
                             &pathVectorListMutex, routerArg};
     //Create threads
