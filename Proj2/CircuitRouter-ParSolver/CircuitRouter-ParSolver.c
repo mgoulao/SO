@@ -199,17 +199,24 @@ void routerSolvePar(void* routerArg) {
     pthread_mutex_t gridMutex;
     pthread_mutex_t queueMutex;
     pthread_mutex_t pathVectorListMutex;
+
+    router_solve_arg_t* routerArgPtr = (router_solve_arg_t*)routerArg;
+    int nColumns = routerArgPtr->mazePtr->gridPtr->width;
+    pthread_mutex_t* columnMutexes = (pthread_mutex_t*)malloc(nColumns*sizeof(pthread_mutex_t));
+
+    for(i = 0; i < nColumns; i++) {
+        pthread_mutex_init(&columnMutexes[i], NULL);
+    }
+
     //Create mutex
     pthread_mutex_init(&globalMutex, NULL); // FIXME: ADD verifications
     pthread_mutex_init(&gridMutex, NULL);
     pthread_mutex_init(&queueMutex, NULL);
     pthread_mutex_init(&pathVectorListMutex, NULL);
 
-    router_solve_arg_t* t = (router_solve_arg_t*)routerArg;
-    printf("%d\n", t->mazePtr->gridPtr->width);
 
     routerSolveArgs args = {&globalMutex, &gridMutex, &queueMutex, 
-                            &pathVectorListMutex, routerArg};
+                            &pathVectorListMutex, columnMutexes, routerArg};
     //Create threads
     for(i = 0; i < global_params[PARAM_T]; i++) {
         if (pthread_create(&tid[i], 0, router_solve,(void *) &args) != 0) {
@@ -233,6 +240,7 @@ void routerSolvePar(void* routerArg) {
     pthread_mutex_destroy(&queueMutex);
     pthread_mutex_destroy(&pathVectorListMutex);
 
+    free(columnMutexes);
 }
 
 

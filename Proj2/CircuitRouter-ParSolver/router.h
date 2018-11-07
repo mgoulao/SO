@@ -99,9 +99,9 @@ typedef struct {
     pthread_mutex_t* gridMutex;
     pthread_mutex_t* queueMutex;
     pthread_mutex_t* pathVectorListMutex;
+    pthread_mutex_t* columnMutexes;
     void * routerArg;
 } routerSolveArgs;
-
 
 #endif /* ROUTER_H */
 

@@ -150,11 +150,14 @@ void grid_setPoint (grid_t* gridPtr, long x, long y, long z, long value);
 void grid_addPath (grid_t* gridPtr, vector_t* pointVectorPtr);
 
 
+void unlock_grid_columns(grid_t* gridPtr, vector_t* pointVectorPtr, pthread_mutex_t* columnMutexes, 
+                        int** columnPointsVectorPtr, long* lastLock);
+
 /* =============================================================================
  * grid_addPath_Ptr
  * =============================================================================
  */
-bool_t grid_addPath_Ptr (grid_t* gridPtr, vector_t* pointVectorPtr, pthread_mutex_t* gridMutex);
+bool_t grid_addPath_Ptr (grid_t* gridPtr, vector_t* pointVectorPtr, pthread_mutex_t* columnMutexes);
 
 
 /* =============================================================================
@@ -162,7 +165,6 @@ bool_t grid_addPath_Ptr (grid_t* gridPtr, vector_t* pointVectorPtr, pthread_mute
  * =============================================================================
  */
 void grid_print (grid_t* gridPtr, FILE *fp);
-
 
 #endif /* GRID_H */
 

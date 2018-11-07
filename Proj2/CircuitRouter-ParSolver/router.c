@@ -299,6 +299,7 @@ void* router_solve (void* args){
     pthread_mutex_t* gridMutex = routerArgs->gridMutex;
     pthread_mutex_t* queueMutex = routerArgs->queueMutex;
     pthread_mutex_t* pathVectorListMutex = routerArgs->pathVectorListMutex;
+    pthread_mutex_t* columnMutexes = routerArgs->columnMutexes;
     void * argPtr = routerArgs->routerArg;
 
     //printf("%d\n", globalMutex);
@@ -368,7 +369,7 @@ void* router_solve (void* args){
                             srcPtr, dstPtr)) {
                 pointVectorPtr = doTraceback(gridPtr, myGridPtr, dstPtr, bendCost);
                 if (pointVectorPtr) {
-                    success = grid_addPath_Ptr(gridPtr, pointVectorPtr, gridMutex);
+                    success = grid_addPath_Ptr(gridPtr, pointVectorPtr, columnMutexes);
                     continue;
                 } 
             } 
