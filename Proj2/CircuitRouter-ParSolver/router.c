@@ -356,6 +356,9 @@ void* router_solve (void* args){
         coordinate_t* srcPtr = coordinatePairPtr->firstPtr;
         coordinate_t* dstPtr = coordinatePairPtr->secondPtr;
 
+        /* printf("start- %d, %d, %d\n", srcPtr->x, srcPtr->y, srcPtr->z);
+        printf("end- %d, %d, %d\n", dstPtr->x,dstPtr->y, dstPtr->z); */
+
 
         pair_free(coordinatePairPtr);
 

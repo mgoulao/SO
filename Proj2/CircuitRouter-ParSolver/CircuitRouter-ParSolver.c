@@ -248,7 +248,7 @@ void routerSolvePar(void* routerArg) {
  * main
  * =============================================================================
  */
-int main(int argc, char** argv){
+int main(int argc, char** argv){ // ASK: O projeto tem uma free a menos na solucao do 1
     /*
      * Initialization
      */

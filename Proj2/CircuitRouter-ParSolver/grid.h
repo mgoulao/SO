@@ -151,7 +151,7 @@ void grid_addPath (grid_t* gridPtr, vector_t* pointVectorPtr);
 
 
 void unlock_grid_columns(grid_t* gridPtr, vector_t* pointVectorPtr, pthread_mutex_t* columnMutexes, 
-                        int** columnPointsVectorPtr, long* lastLock);
+                        int** columnPointsVectorPtr, long lastLock);
 
 /* =============================================================================
  * grid_addPath_Ptr
