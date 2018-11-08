@@ -58,6 +58,7 @@
 #include <getopt.h>
 #include <pthread.h>
 #include <fcntl.h>
+#include <time.h>
 #include "coordinate.h"
 #include "grid.h"
 #include "lib/types.h"
@@ -244,6 +245,7 @@ bool_t grid_addPath_Ptr (grid_t* gridPtr, vector_t* pointVectorPtr, pthread_mute
     bool_t completed = FALSE;
     int *columnPointsVector = (int*)malloc(gridPtr->width * sizeof(int));
     memset(columnPointsVector, 0, gridPtr->width * sizeof(int));
+    struct timespec backoff = {0, 1000L};
 
 
     while(!completed) {
@@ -260,6 +262,10 @@ bool_t grid_addPath_Ptr (grid_t* gridPtr, vector_t* pointVectorPtr, pthread_mute
                     lastLock = i;
                     columnPointsVector[x]--;
                     unlock_grid_columns(gridPtr, pointVectorPtr, columnMutexes, &columnPointsVector, lastLock);
+                    if(nanosleep(&backoff, NULL) != 0) {
+                        perror("error nanosleep");
+                        exit(1); //ASK: Se e necessario
+                    }
                     break;
                 }
             }

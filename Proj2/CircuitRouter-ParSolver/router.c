@@ -364,8 +364,10 @@ void* router_solve (void* args){
                 pointVectorPtr = doTraceback(gridPtr, myGridPtr, dstPtr, bendCost);
                 if (pointVectorPtr) {
                     success = grid_addPath_Ptr(gridPtr, pointVectorPtr, columnMutexes);
+                    if(!success)
+                        vector_free(pointVectorPtr);
                     continue;
-                } 
+                }
             } 
             break;
         }
