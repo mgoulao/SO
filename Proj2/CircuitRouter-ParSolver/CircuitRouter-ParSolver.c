@@ -205,6 +205,7 @@ void routerSolvePar(void* routerArg) {
     pthread_mutex_t* columnMutexes = (pthread_mutex_t*)malloc(nColumns*sizeof(pthread_mutex_t));
 
     for(i = 0; i < nColumns; i++) {
+        printf("%d\n", i);
         pthread_mutex_init(&columnMutexes[i], NULL);
     }
 
