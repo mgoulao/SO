@@ -135,7 +135,6 @@ static void parseArgs (long argc, char* const argv[]){
                 global_params[(unsigned char)opt] = atol(optarg);
                 break;
             case 't':
-                printf("t : %s\n", optarg);
                 global_params[(unsigned char)opt] = atol(optarg);
                 break;
             case '?':
@@ -205,7 +204,6 @@ void routerSolvePar(void* routerArg) {
     pthread_mutex_t* columnMutexes = (pthread_mutex_t*)malloc(nColumns*sizeof(pthread_mutex_t));
 
     for(i = 0; i < nColumns; i++) {
-        printf("%d\n", i);
         pthread_mutex_init(&columnMutexes[i], NULL);
     }
 
