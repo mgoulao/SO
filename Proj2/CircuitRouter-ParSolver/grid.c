@@ -220,13 +220,13 @@ void unlock_grid_columns(grid_t* gridPtr, vector_t* pointVectorPtr, pthread_mute
     long x, y, z;
     
     for(i = 1; i < lastLock; i++) {
-        //unlock
         long* gridPointPtr = (long*)vector_at(pointVectorPtr, i);
         grid_getPointIndices(gridPtr, gridPointPtr, &x, &y, &z);
         columnPointsVector[x]--;
         if(columnPointsVector[x] == 0){
             if(pthread_mutex_unlock(&(columnMutexes[x])) != 0) {
-                printf("error");
+                perror("error unlocking mutex");
+                exit(1);
             };
         }
     }
@@ -245,12 +245,8 @@ bool_t grid_addPath_Ptr (grid_t* gridPtr, vector_t* pointVectorPtr, pthread_mute
     int *columnPointsVector = (int*)malloc(gridPtr->width * sizeof(int));
     memset(columnPointsVector, 0, gridPtr->width * sizeof(int));
 
-    /* if(pthread_mutex_lock(gridMutex) != 0) {
-        perror("Error lock grid mutex\n");
-        exit(EXIT_FAILURE);
-    } */
 
-    while(!completed) { // TODO: Solution fails sometimes
+    while(!completed) {
         completed = TRUE;
 
         for (i = 1; i < (n-1); i++) {
@@ -282,15 +278,15 @@ bool_t grid_addPath_Ptr (grid_t* gridPtr, vector_t* pointVectorPtr, pthread_mute
         grid_getPointIndices(gridPtr, gridPointPtr, &x, &y, &z);
         
         *gridPointPtr = GRID_POINT_FULL; 
-        //unlock
         columnPointsVector[x]--;
         if(columnPointsVector[x] == 0){
-            pthread_mutex_unlock(&(columnMutexes[x]));
+            if(pthread_mutex_unlock(&(columnMutexes[x]))) {
+                perror("error unlocking mutex");
+                exit(1);
+            }
         }
     }
 
-/*     pthread_mutex_unlock(gridMutex);
- */
     free(columnPointsVector);
     return TRUE;
 }

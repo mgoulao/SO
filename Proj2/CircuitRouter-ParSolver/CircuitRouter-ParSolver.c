@@ -194,8 +194,6 @@ FILE * outputFile() {
 void routerSolvePar(void* routerArg) {
     pthread_t tid[global_params[PARAM_T]];
     int i;
-    pthread_mutex_t globalMutex;
-    pthread_mutex_t gridMutex;
     pthread_mutex_t queueMutex;
     pthread_mutex_t pathVectorListMutex;
 
@@ -203,19 +201,25 @@ void routerSolvePar(void* routerArg) {
     int nColumns = routerArgPtr->mazePtr->gridPtr->width;
     pthread_mutex_t* columnMutexes = (pthread_mutex_t*)malloc(nColumns*sizeof(pthread_mutex_t));
 
+    
+    //Create mutex
     for(i = 0; i < nColumns; i++) {
-        pthread_mutex_init(&columnMutexes[i], NULL);
+        if(pthread_mutex_init(&columnMutexes[i], NULL)) {
+            perror("Error creating mutex");
+            exit(1);
+        }
+    }
+    if(pthread_mutex_init(&queueMutex, NULL)) {
+        perror("Error creating mutex");
+        exit(1);
+    }
+    if(pthread_mutex_init(&pathVectorListMutex, NULL)) {
+        perror("Error creating mutex");
+        exit(1);
     }
 
-    //Create mutex
-    pthread_mutex_init(&globalMutex, NULL); // FIXME: ADD verifications
-    pthread_mutex_init(&gridMutex, NULL);
-    pthread_mutex_init(&queueMutex, NULL);
-    pthread_mutex_init(&pathVectorListMutex, NULL);
 
-
-    routerSolveArgs args = {&globalMutex, &gridMutex, &queueMutex, 
-                            &pathVectorListMutex, columnMutexes, routerArg};
+    routerSolveArgs args = {&queueMutex, &pathVectorListMutex, columnMutexes, routerArg};
     //Create threads
     for(i = 0; i < global_params[PARAM_T]; i++) {
         if (pthread_create(&tid[i], 0, router_solve,(void *) &args) != 0) {
@@ -226,16 +230,13 @@ void routerSolvePar(void* routerArg) {
 
     // Wait for the threads
     for(i = 0; i < global_params[PARAM_T]; i++) {
-        int ret = pthread_join(tid[i], NULL);
-        if(ret != 0) {
-            //ASK: O que fazer neste caso dar exit ou detetar o problema
+        if(pthread_join(tid[i], NULL) != 0) {
             perror("Error pthread join");
+            exit(1);
         }
     }
     
     //ASK: Necessario verificar
-    pthread_mutex_destroy(&globalMutex);
-    pthread_mutex_destroy(&gridMutex);
     pthread_mutex_destroy(&queueMutex);
     pthread_mutex_destroy(&pathVectorListMutex);
 

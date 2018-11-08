@@ -295,20 +295,14 @@ static vector_t* doTraceback (grid_t* gridPtr, grid_t* myGridPtr, coordinate_t* 
  */
 void* router_solve (void* args){
     routerSolveArgs* routerArgs = (routerSolveArgs*)args;
-    pthread_mutex_t* globalMutex = routerArgs->globalMutex;
-    pthread_mutex_t* gridMutex = routerArgs->gridMutex;
     pthread_mutex_t* queueMutex = routerArgs->queueMutex;
     pthread_mutex_t* pathVectorListMutex = routerArgs->pathVectorListMutex;
     pthread_mutex_t* columnMutexes = routerArgs->columnMutexes;
     void * argPtr = routerArgs->routerArg;
 
-    //printf("%d\n", globalMutex);
-    //pthread_mutex_lock(globalMutex);
-    //TODO: - verify return
-    //printf("--start %ld\n", pthread_self());
 
     /**
-     * Potencial zona critica 1 
+     * Potencial zona critica 1 ASK:
     */
     router_solve_arg_t* routerArgPtr = (router_solve_arg_t*)argPtr;
     router_t* routerPtr = routerArgPtr->routerPtr;
@@ -355,10 +349,7 @@ void* router_solve (void* args){
 
         coordinate_t* srcPtr = coordinatePairPtr->firstPtr;
         coordinate_t* dstPtr = coordinatePairPtr->secondPtr;
-
-        /* printf("start- %d, %d, %d\n", srcPtr->x, srcPtr->y, srcPtr->z);
-        printf("end- %d, %d, %d\n", dstPtr->x,dstPtr->y, dstPtr->z); */
-
+   
 
         pair_free(coordinatePairPtr);
 
@@ -403,8 +394,6 @@ void* router_solve (void* args){
     grid_free(myGridPtr);
     queue_free(myExpansionQueuePtr);
 
-    //printf("--end %ld\n", pthread_self());
-    //pthread_mutex_unlock(globalMutex);
 
     return NULL;
 }
