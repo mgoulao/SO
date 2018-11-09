@@ -8,8 +8,18 @@ if [ -z "$maxThreads" ]; then
 	exit
 fi
 
+if [ $maxThreads -lt 1 ]; then
+	echo "Numero tem de ser maior que 0"
+	exit
+fi
+
 if [ -z "$inputFile" ]; then
 	echo "Falta inputFile"
+	exit
+fi
+
+if [ ! -f "$inputFile" ]; then
+	echo "Ficheiro invalido"
 	exit
 fi
 

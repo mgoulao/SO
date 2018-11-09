@@ -2,14 +2,23 @@
 
 .
 +-- CircuitRouter-ParSolver
-|   +-- begin-with-the-crazy-ideas.textile
-|   +-- on-simplicity-in-technology.markdown
+|   +-- CircuitRouter-ParSolver.c
+|   +-- coordinate.c
+|   +-- coordinate.h
+|   +-- grid.c
+|   +-- grid.h
+|   +-- maze.c
+|   +-- maze.h
+|   +-- router.h
 +-- CircuitRouter-SeqSolver
-|   +-- footer.html
-|   +-- header.html
+|   +-- CircuitRouter-SeqSolver.c
+|   +-- coordinate.c
+|   +-- grid.c
+|   +-- maze.c
+|   +-- router.c
 +-- CircuitRouter-SimpleShell
-|   +-- default.html
-|   +-- post.html
+|   +-- CircuitRouter-SimpleShell.c
+|   +-- CircuitRouter-SimpleShell.h
 +-- inputs
 |   +-- *.txt
 +-- lib
@@ -19,19 +28,29 @@
 
 #Compilar
 
+make
+
 #Executar
 
+-Pelo doTest.sh
+
+./doTest.sh
+
+-Linha de comandos
+
+cd CircuitRouter-ParSolver
+./CircuitRouter-ParSolver -t numberThreads inputFile
 
 
 #Carateristicas
 
-CPU:
+-CPU:
 
 * Numero de cores: 4
 * Clock Rate: 500.024MHz
 * Model: 78 - Intel(R) Core(TM) i7-6500U CPU @ 2.50GHz
 
-Sistema Operativo:
+-Sistema Operativo:
 
-* Linux 4.15.0-20-generic, #21-Ubuntu, x86_64 x86_64 x86_64 GNU/Linux
+* 4.15.0-20-generic #21-Ubuntu SMP Tue Apr 24 06:16:15 UTC 2018 x86_64 x86_64 x86_64 GNU/Linux
 
