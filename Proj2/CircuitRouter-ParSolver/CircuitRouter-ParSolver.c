@@ -202,7 +202,6 @@ void routerSolvePar(void* routerArg) {
     pthread_mutex_t* columnMutexes = (pthread_mutex_t*)malloc(nColumns*sizeof(pthread_mutex_t));
 
     
-    //Create mutex
     for(i = 0; i < nColumns; i++) {
         if(pthread_mutex_init(&columnMutexes[i], NULL)) {
             perror("Error creating mutex");
@@ -228,7 +227,7 @@ void routerSolvePar(void* routerArg) {
         }
     }
 
-    // Wait for the threads
+    // Wait for threads
     for(i = 0; i < global_params[PARAM_T]; i++) {
         if(pthread_join(tid[i], NULL) != 0) {
             perror("Error pthread join");
@@ -236,9 +235,14 @@ void routerSolvePar(void* routerArg) {
         }
     }
     
-    //ASK: Necessario verificar
-    pthread_mutex_destroy(&queueMutex);
-    pthread_mutex_destroy(&pathVectorListMutex);
+    if(pthread_mutex_destroy(&queueMutex)) {
+        perror("error mutex destroy");
+        exit(1);
+    }
+    if(pthread_mutex_destroy(&pathVectorListMutex)) {
+        perror("error mutex destroy");
+        exit(1);
+    }
 
     free(columnMutexes);
 }
@@ -248,7 +252,7 @@ void routerSolvePar(void* routerArg) {
  * main
  * =============================================================================
  */
-int main(int argc, char** argv){ // ASK: O projeto tem uma free a menos na solucao do 1
+int main(int argc, char** argv){
     /*
      * Initialization
      */

@@ -301,9 +301,6 @@ void* router_solve (void* args){
     void * argPtr = routerArgs->routerArg;
 
 
-    /**
-     * Potencial zona critica 1 ASK:
-    */
     router_solve_arg_t* routerArgPtr = (router_solve_arg_t*)argPtr;
     router_t* routerPtr = routerArgPtr->routerPtr;
     maze_t* mazePtr = routerArgPtr->mazePtr;
@@ -317,9 +314,6 @@ void* router_solve (void* args){
     long bendCost = routerPtr->bendCost;
     queue_t* myExpansionQueuePtr = queue_alloc(-1);
 
-    /**
-     * Fim Potencial zona critica 1 
-    */
 
     /*
      * Iterate over work list to route each path. This involves an
@@ -330,19 +324,20 @@ void* router_solve (void* args){
     while (1) {
 
         pair_t* coordinatePairPtr;
-        if (queue_isEmpty(workQueuePtr)) { //TODO: analisar melhor esta linha
-            coordinatePairPtr = NULL;
-        } else {
-            if (pthread_mutex_lock(queueMutex) != 0) {
-                perror("Error lock queue mutex");
-                exit(EXIT_FAILURE);
-            }
-            coordinatePairPtr = (pair_t*)queue_pop(workQueuePtr);
-            if(pthread_mutex_unlock(queueMutex)) {
-                perror("Error unlock queue mutex");
-                exit(EXIT_FAILURE);
-            }
+        if (pthread_mutex_lock(queueMutex) != 0) {
+            perror("Error lock queue mutex");
+            exit(EXIT_FAILURE);
         }
+        if (queue_isEmpty(workQueuePtr)) {
+            coordinatePairPtr = NULL;
+        } else {   
+            coordinatePairPtr = (pair_t*)queue_pop(workQueuePtr);
+        }
+        if(pthread_mutex_unlock(queueMutex)) {
+            perror("Error unlock queue mutex");
+            exit(EXIT_FAILURE);
+        }
+
         if (coordinatePairPtr == NULL) {
             break;
         }
@@ -387,7 +382,7 @@ void* router_solve (void* args){
         perror("Error lock queue mutex");
         exit(EXIT_FAILURE);
     }
-    list_insert(pathVectorListPtr, (void*)myPathVectorPtr);//ASK: Se e necessario mais fino
+    list_insert(pathVectorListPtr, (void*)myPathVectorPtr);
     if(pthread_mutex_unlock(pathVectorListMutex) != 0) {
         perror("Error lock queue mutex");
         exit(EXIT_FAILURE);
