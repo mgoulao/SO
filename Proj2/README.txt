@@ -10,6 +10,7 @@
 |   +-- maze.c
 |   +-- maze.h
 |   +-- router.h
+|   +-- Makefile
 +-- CircuitRouter-SeqSolver
 |   +-- CircuitRouter-SeqSolver.c
 |   +-- coordinate.c
@@ -19,23 +20,14 @@
 |   +-- maze.c
 |   +-- maze.h
 |   +-- router.h
+|   +-- Makefile
 +-- CircuitRouter-SimpleShell
 |   +-- CircuitRouter-SimpleShell.c
 |   +-- CircuitRouter-SimpleShell.h
+|   +-- Makefile
 +-- inputs
 |   +-- generate.py
-|   +-- random-x128-y128-z5-n128.txt
-|   +-- random-x32-y32-z3-n64.txt
-|   +-- random-x48-y48-z3-n64.txt
-|   +-- random-x64-y64-z3-n64.txt
-|   +-- random-x128-y128-z3-n128.txt
-|   +-- random-x256-y256-z3-n256.txt
-|   +-- random-x32-y32-z3-n96.txt
-|   +-- random-x512-y512-z7-n512.txt
-|   +-- random-x128-y128-z3-n64.txt
-|   +-- random-x256-y256-z5-n256.txt
-|   +-- random-x48-y48-z3-n48.txt
-|   +-- random-x64-y64-z3-n48.txt
+|   +-- *.txt (ficheiros inputs)
 +-- lib
 |   +-- commandlinereader.c
 |   +-- commandlinereader.h
@@ -55,6 +47,9 @@
 |   +-- vector.h
 |   +-- vector.o
 +-- ./doTest.sh
++-- results
+|   +-- *.csv (ficheiros com analise do speed-up)
++-- Makefile
 +-- README.txt
 
 #Compilar
