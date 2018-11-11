@@ -238,7 +238,7 @@ void unlock_grid_columns(grid_t* gridPtr, vector_t* pointVectorPtr, pthread_mute
  * grid_addPath_Ptr
  * =============================================================================
  */
-bool_t grid_addPath_Ptr (grid_t* gridPtr, vector_t* pointVectorPtr, pthread_mutex_t* columnMutexes){
+bool_t grid_addPath_Ptr (grid_t* gridPtr, vector_t* pointVectorPtr, pthread_mutex_t* columnMutexes, int attempts){
     long i;
     long n = vector_getSize(pointVectorPtr);
     long lastLock = 0;
@@ -247,7 +247,8 @@ bool_t grid_addPath_Ptr (grid_t* gridPtr, vector_t* pointVectorPtr, pthread_mute
     long* gridPointPtr;
     int *columnPointsVector = (int*)malloc(gridPtr->width * sizeof(int));
     memset(columnPointsVector, 0, gridPtr->width * sizeof(int));
-    struct timespec backoff = {0, 1000L};
+    long max = 100 * attempts;
+    struct timespec backoff = {0, rand() % max};
 
 
     while(!completed) {

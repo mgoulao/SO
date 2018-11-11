@@ -157,7 +157,7 @@ void unlock_grid_columns(grid_t* gridPtr, vector_t* pointVectorPtr, pthread_mute
  * grid_addPath_Ptr
  * =============================================================================
  */
-bool_t grid_addPath_Ptr (grid_t* gridPtr, vector_t* pointVectorPtr, pthread_mutex_t* columnMutexes);
+bool_t grid_addPath_Ptr (grid_t* gridPtr, vector_t* pointVectorPtr, pthread_mutex_t* columnMutexes, int attempts);
 
 
 /* =============================================================================

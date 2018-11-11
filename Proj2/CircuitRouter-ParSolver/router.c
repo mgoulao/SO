@@ -349,16 +349,17 @@ void* router_solve (void* args){
         pair_free(coordinatePairPtr);
 
         bool_t success = FALSE;
-        
+        int attempts = 0;
         vector_t* pointVectorPtr = NULL;
 
         while(!success) {
+            attempts++;
             grid_copy(myGridPtr, gridPtr); /* create a copy of the grid, over which the expansion and trace back phases will be executed. */
             if (doExpansion(routerPtr, myGridPtr, myExpansionQueuePtr,
                             srcPtr, dstPtr)) {
                 pointVectorPtr = doTraceback(gridPtr, myGridPtr, dstPtr, bendCost);
                 if (pointVectorPtr) {
-                    success = grid_addPath_Ptr(gridPtr, pointVectorPtr, columnMutexes);
+                    success = grid_addPath_Ptr(gridPtr, pointVectorPtr, columnMutexes, attempts);
                     if(!success)
                         vector_free(pointVectorPtr);
                     continue;
