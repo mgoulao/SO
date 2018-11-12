@@ -245,7 +245,11 @@ bool_t grid_addPath_Ptr (grid_t* gridPtr, vector_t* pointVectorPtr, pthread_mute
     long x, y, z;
     bool_t completed = FALSE;
     long* gridPointPtr;
-    int *columnPointsVector = (int*)malloc(gridPtr->width * sizeof(int));
+    int* columnPointsVector = (int*)malloc(gridPtr->width * sizeof(int));
+    if(columnPointsVector == NULL) {
+        perror("error malloc");
+        exit(1);
+    }
     memset(columnPointsVector, 0, gridPtr->width * sizeof(int));
     long max = 100 * attempts;
     struct timespec backoff = {0, rand() % max};

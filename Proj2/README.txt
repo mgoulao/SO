@@ -72,9 +72,9 @@ cd CircuitRouter-ParSolver
 
 -CPU:
 
-* Numero de cores: 4
-* Clock Rate: 500.024MHz
-* Model: 78 - Intel(R) Core(TM) i7-6500U CPU @ 2.50GHz
+* Numero de cores: 2 (4 Threads)
+* Clock Rate: 2.50GHz
+* Model: 78 - Intel(R) Core(TM) i7-6500U CPU
 
 -Sistema Operativo:
 

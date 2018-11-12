@@ -200,7 +200,10 @@ void routerSolvePar(void* routerArg) {
     router_solve_arg_t* routerArgPtr = (router_solve_arg_t*)routerArg;
     int nColumns = routerArgPtr->mazePtr->gridPtr->width;
     pthread_mutex_t* columnMutexes = (pthread_mutex_t*)malloc(nColumns*sizeof(pthread_mutex_t));
-
+    if(columnMutexes == NULL) {
+        perror("error malloc");
+        exit(1);
+    }
     
     for(i = 0; i < nColumns; i++) {
         if(pthread_mutex_init(&columnMutexes[i], NULL)) {
