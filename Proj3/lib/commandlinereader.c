@@ -5,6 +5,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <unistd.h>
 
 /**
 Reads up to 'vectorSize' space-separated arguments from the standard input
@@ -23,7 +24,7 @@ Arguments:
 Return value:
  The number of arguments that were read, or -1 if some error occurred.
 */
-int readLineArguments(char **argVector, int vectorSize, char *buffer, int bufferSize)
+int readLineArguments(char **argVector, int vectorSize, char *buffer, int bufferSize, FILE *fpInput)
 {
   int numTokens = 0;
   char *s = " \r\n\t";
@@ -33,27 +34,32 @@ int readLineArguments(char **argVector, int vectorSize, char *buffer, int buffer
   char *token;
 
   if (argVector == NULL || buffer == NULL || vectorSize <= 0 || bufferSize <= 0)
-     return 0;
+    return 0;
 
-  if (fgets(buffer, bufferSize, stdin) == NULL) {
+  // FILE* fp = fdopen(fpInput, "r");
+
+  if (fgets(buffer, bufferSize, fpInput) == NULL)
+  {
     return -1;
   }
+
+  printf("%s\n", buffer);
 
   /* get the first token */
   token = strtok(buffer, s);
 
   /* walk through other tokens */
-  while( numTokens < vectorSize-1 && token != NULL ) {
+  while (numTokens < vectorSize - 1 && token != NULL)
+  {
     argVector[numTokens] = token;
-    numTokens ++;
+    numTokens++;
 
     token = strtok(NULL, s);
   }
 
-  for (i = numTokens; i<vectorSize; i++) {
+  for (i = numTokens; i < vectorSize; i++)
+  {
     argVector[i] = NULL;
   }
-
   return numTokens;
 }
-

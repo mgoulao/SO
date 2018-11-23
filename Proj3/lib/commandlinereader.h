@@ -6,6 +6,8 @@
 #ifndef COMMANDLINEREADER_H
 #define COMMANDLINEREADER_H
 
+#include <stdio.h>
+
 /**
 Reads up to 'vectorSize' space-separated arguments from the standard input
 and saves them in the entries of the 'argVector' argument.
@@ -24,6 +26,6 @@ Return value:
  The number of arguments that were read, or -1 if some error occurred.
 */
 
-int readLineArguments(char **argVector, int vectorSize, char *buffer, int bufferSize);
+int readLineArguments(char **argVector, int vectorSize, char *buffer, int bufferSize, FILE* fpInput);
 
 #endif

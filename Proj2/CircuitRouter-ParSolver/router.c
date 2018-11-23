@@ -86,8 +86,6 @@ point_t MOVE_NEGX = {-1,  0,  0,  0, MOMENTUM_NEGX};
 point_t MOVE_NEGY = { 0, -1,  0,  0, MOMENTUM_NEGY};
 point_t MOVE_NEGZ = { 0,  0, -1,  0, MOMENTUM_NEGZ};
 
-pthread_mutex_t* columnMutexes;
-static int expansions = 0;
 
 /* =============================================================================
  * router_alloc
@@ -128,10 +126,6 @@ static void expandToNeighbor (grid_t* myGridPtr, long x, long y, long z, long va
         if (neighborValue == GRID_POINT_EMPTY) {
             (*neighborGridPointPtr) = value;
             queue_push(queuePtr, (void*)neighborGridPointPtr);
-            pthread_mutex_lock(&(columnMutexes[x]));
-            expansions++;
-            pthread_mutex_unlock(&(columnMutexes[x]));
-            printf("%d\n", expansions);
         } else if (neighborValue != GRID_POINT_FULL) {
             /* We have expanded here before... is this new path better? */
             if (value < neighborValue) {
@@ -304,7 +298,7 @@ void* router_solve (void* args){
     routerSolveArgs* routerArgs = (routerSolveArgs*)args;
     pthread_mutex_t* queueMutex = routerArgs->queueMutex;
     pthread_mutex_t* pathVectorListMutex = routerArgs->pathVectorListMutex;
-    columnMutexes = routerArgs->columnMutexes;
+    pthread_mutex_t* columnMutexes = routerArgs->columnMutexes;
     void * argPtr = routerArgs->routerArg;
 
 
