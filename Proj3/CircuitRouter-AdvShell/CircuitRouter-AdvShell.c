@@ -6,6 +6,7 @@
 
 #include "lib/commandlinereader.h"
 #include "lib/vector.h"
+#include "lib/timer.h"
 #include "CircuitRouter-AdvShell.h"
 #include <stdio.h>
 #include <unistd.h>
@@ -26,24 +27,48 @@
 #define MAXARGS 3
 #define BUFFER_SIZE 124
 
+vector_t *children;
+int runningChildren;
+
+void sigintHandler(int sig)
+{
+    int status;
+    int pid = waitpid(-1, &status, WNOHANG);
+    if (pid == -1)
+    {
+        perror("error waitpid");
+        exit(EXIT_FAILURE);
+    }
+    else if (pid == 0)
+        ; //Nenhum filho acabou
+    else
+    {
+        for (int i = 0; i < vector_getSize(children); ++i)
+        {
+            child_t *child = vector_at(children, i);
+            if (child->pid == pid)
+            {
+                TIMER_READ(child->endTime);
+                child->status = status;
+                runningChildren--;
+            }
+        }
+        printf("Welcome my son- %d, %d\n", pid, sig);
+    }
+}
+
 void waitForChild(vector_t *children)
 {
     while (1)
     {
-        child_t *child = malloc(sizeof(child_t));
-        if (child == NULL)
-        {
-            perror("Error allocating memory");
-            exit(EXIT_FAILURE);
-        }
-        child->pid = wait(&(child->status));
-        if (child->pid < 0)
+        int status;
+        int pid = wait(&status);
+        if (pid < 0)
         {
             if (errno == EINTR)
             {
                 /* Este codigo de erro significa que chegou signal que interrompeu a espera
                    pela terminacao de filho; logo voltamos a esperar */
-                free(child);
                 continue;
             }
             else
@@ -52,7 +77,16 @@ void waitForChild(vector_t *children)
                 exit(EXIT_FAILURE);
             }
         }
-        vector_pushBack(children, child);
+
+        for (int i = 0; i < vector_getSize(children); ++i)
+        {
+            child_t *child = vector_at(children, i);
+            if (child->pid == pid)
+            {
+                TIMER_READ(child->endTime);
+                child->status = status;
+            }
+        }
         return;
     }
 }
@@ -71,13 +105,13 @@ void printChildren(vector_t *children)
             {
                 ret = "OK";
             }
-            printf("CHILD EXITED: (PID=%d; return %s)\n", pid, ret);
+            printf("CHILD EXITED: (PID=%d; return %s; %f s)\n", pid, ret, TIMER_DIFF_SECONDS(child->startTime, child->endTime));
         }
     }
     puts("END.");
 }
 
-int advShell(FILE *fpInput, int MAXCHILDREN, int *runningChildrenPtr, vector_t *children)
+int advShell(FILE *fpInput, int MAXCHILDREN, vector_t *children)
 {
     int requestFromPipe = (fpInput == stdin) ? 0 : 1;
     int numArgs;
@@ -106,11 +140,10 @@ int advShell(FILE *fpInput, int MAXCHILDREN, int *runningChildrenPtr, vector_t *
         printf("CircuitRouter-AdvShell will exit.\n--\n");
 
         /* Espera pela terminacao de cada filho */
-        printf("--exit- %d\n", (*runningChildrenPtr));
-        while ((*runningChildrenPtr) > 0)
+        while (runningChildren > 0)
         {
             waitForChild(children);
-            (*runningChildrenPtr)--;
+            runningChildren--;
         }
 
         printChildren(children);
@@ -133,10 +166,10 @@ int advShell(FILE *fpInput, int MAXCHILDREN, int *runningChildrenPtr, vector_t *
             printf("%s: invalid syntax. Try again.\n", COMMAND_RUN);
             return 0;
         }
-        if (MAXCHILDREN != -1 && (*runningChildrenPtr) >= MAXCHILDREN)
+        if (MAXCHILDREN != -1 && runningChildren >= MAXCHILDREN)
         {
             waitForChild(children);
-            (*runningChildrenPtr)--;
+            runningChildren--;
         }
 
         pid = fork();
@@ -148,8 +181,19 @@ int advShell(FILE *fpInput, int MAXCHILDREN, int *runningChildrenPtr, vector_t *
 
         if (pid > 0)
         {
-            (*runningChildrenPtr)++;
+            runningChildren++;
             printf("%s: background child started with PID %d.\n\n", COMMAND_RUN, pid);
+            child_t *child = malloc(sizeof(child_t));
+            if (child == NULL)
+            {
+                perror("Error allocating memory");
+                exit(EXIT_FAILURE);
+            }
+
+            child->pid = pid;
+            TIMER_READ(child->startTime);
+            vector_pushBack(children, child);
+
             if (requestFromPipe)
                 fclose(fpResponse);
             return 0;
@@ -162,6 +206,10 @@ int advShell(FILE *fpInput, int MAXCHILDREN, int *runningChildrenPtr, vector_t *
                 close(1);
                 dup(fdResponse);
                 fclose(fpResponse);
+            }
+            else
+            {
+                close(1);
             }
 
             char seqsolver[] = "../CircuitRouter-SeqSolver/CircuitRouter-SeqSolver";
@@ -186,10 +234,18 @@ int advShell(FILE *fpInput, int MAXCHILDREN, int *runningChildrenPtr, vector_t *
 
 int main(int argc, char **argv)
 {
+    struct sigaction act;
+    act.sa_handler = &sigintHandler;
+    act.sa_flags = SA_RESTART;
+    sigfillset(&act.sa_mask);
+    if (sigaction(SIGCHLD, &act, NULL) == -1)
+    {
+        perror("Error: cannot handle SIGCHLD");
+        exit(EXIT_FAILURE);
+    }
 
     int MAXCHILDREN = -1;
-    vector_t *children;
-    int runningChildrenPtr = 0;
+    runningChildren = 0;
 
     FILE *fpClient;
     int fdClient;
@@ -238,12 +294,12 @@ int main(int argc, char **argv)
 
         if (FD_ISSET(0, &readFdSet))
         {
-            if (advShell(stdin, MAXCHILDREN, &runningChildrenPtr, children) == -1)
+            if (advShell(stdin, MAXCHILDREN, children) == -1)
                 break;
         }
         if (FD_ISSET(fdClient, &readFdSet))
         {
-            if (advShell(fpClient, MAXCHILDREN, &runningChildrenPtr, children) == -1)
+            if (advShell(fpClient, MAXCHILDREN, children) == -1)
                 break;
         }
     }
