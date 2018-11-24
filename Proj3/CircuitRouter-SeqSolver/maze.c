@@ -154,7 +154,7 @@ long maze_read (maze_t* mazePtr, char * input, FILE * fp){
     FILE* inputFile;
     inputFile = fopen(input,"rt");
     if(!inputFile){
-        fprintf(stderr, "Error: Could not read %s\n", input);
+        printf("Error: Could not read %s\n", input);
         exit(EXIT_FAILURE);
     }
     /*

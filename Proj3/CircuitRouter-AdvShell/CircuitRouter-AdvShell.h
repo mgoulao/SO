@@ -4,6 +4,8 @@
 #include "lib/vector.h"
 #include <sys/types.h>
 
+#define PIPE_NAME "/tmp/CircuitRouter-AdvShell.pipe"
+
 typedef struct {
     pid_t pid;
     int status;

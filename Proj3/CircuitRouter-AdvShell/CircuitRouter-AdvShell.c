@@ -20,8 +20,6 @@
 #include <sys/select.h>
 #include <fcntl.h>
 
-#define PIPE_NAME "/tmp/servidor"
-
 #define COMMAND_EXIT "exit"
 #define COMMAND_RUN "run"
 
@@ -79,14 +77,119 @@ void printChildren(vector_t *children)
     puts("END.");
 }
 
+int advShell(FILE *fpInput, int MAXCHILDREN, int *runningChildrenPtr, vector_t *children)
+{
+    int requestFromPipe = (fpInput == stdin) ? 0 : 1;
+    int numArgs;
+    char *args[MAXARGS + 1];
+    char buffer[BUFFER_SIZE];
+    FILE *fpResponse;
+
+    numArgs = readLineArguments(args, MAXARGS + 1, buffer, BUFFER_SIZE, fpInput);
+
+    if (requestFromPipe && ((fpResponse = fopen(args[numArgs - 1], "w")) == NULL))
+    {
+        perror("error fopen");
+        exit(EXIT_FAILURE);
+    }
+
+    if (!(strcmp(args[0], COMMAND_RUN) == 0) && requestFromPipe)
+    {
+        fprintf(fpResponse, "%s\n", "Command not supported.");
+        fflush(fpResponse);
+        fclose(fpResponse);
+        return 0;
+    }
+
+    else if (numArgs < 0 || (numArgs > 0 && (strcmp(args[0], COMMAND_EXIT) == 0)))
+    {
+        printf("CircuitRouter-AdvShell will exit.\n--\n");
+
+        /* Espera pela terminacao de cada filho */
+        printf("--exit- %d\n", (*runningChildrenPtr));
+        while ((*runningChildrenPtr) > 0)
+        {
+            waitForChild(children);
+            (*runningChildrenPtr)--;
+        }
+
+        printChildren(children);
+        printf("--\nCircuitRouter-AdvShell ended.\n");
+        return -1;
+    }
+
+    else if (numArgs > 0 && strcmp(args[0], COMMAND_RUN) == 0)
+    {
+        int pid;
+        if (requestFromPipe && numArgs < 3)
+        {
+            fprintf(fpResponse, "%s: invalid syntax. Try again.\n", COMMAND_RUN);
+            fflush(fpResponse);
+            fclose(fpResponse);
+            return 0;
+        }
+        else if (numArgs < 2)
+        {
+            printf("%s: invalid syntax. Try again.\n", COMMAND_RUN);
+            return 0;
+        }
+        if (MAXCHILDREN != -1 && (*runningChildrenPtr) >= MAXCHILDREN)
+        {
+            waitForChild(children);
+            (*runningChildrenPtr)--;
+        }
+
+        pid = fork();
+        if (pid < 0)
+        {
+            perror("Failed to create new process.");
+            exit(EXIT_FAILURE);
+        }
+
+        if (pid > 0)
+        {
+            (*runningChildrenPtr)++;
+            printf("%s: background child started with PID %d.\n\n", COMMAND_RUN, pid);
+            if (requestFromPipe)
+                fclose(fpResponse);
+            return 0;
+        }
+        else
+        {
+            if (requestFromPipe)
+            {
+                int fdResponse = fileno(fpResponse);
+                close(1);
+                dup(fdResponse);
+                fclose(fpResponse);
+            }
+
+            char seqsolver[] = "../CircuitRouter-SeqSolver/CircuitRouter-SeqSolver";
+            char *newArgs[3] = {seqsolver, args[1], NULL};
+
+            execv(seqsolver, newArgs);
+            perror("Error while executing child process");
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    else if (numArgs == 0)
+    {
+        /* Nenhum argumento; ignora e volta a pedir */
+        return 0;
+    }
+    else
+        printf("Unknown command. Try again.\n");
+
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
 
-    char *args[MAXARGS + 1];
-    char buffer[BUFFER_SIZE];
     int MAXCHILDREN = -1;
     vector_t *children;
-    int runningChildren = 0;
+    int runningChildrenPtr = 0;
 
     FILE *fpClient;
     int fdClient;
@@ -119,15 +222,13 @@ int main(int argc, char **argv)
 
     while (1)
     {
-        int numArgs;
         int selRet;
-        FILE *fpInput;
 
         FD_ZERO(&readFdSet);
         FD_SET(0, &readFdSet);
         FD_SET(fdClient, &readFdSet);
 
-        while ((selRet = select(FD_SETSIZE, &readFdSet, NULL, NULL, NULL)) < 0)
+        while ((selRet = select(fdClient + 1, &readFdSet, NULL, NULL, NULL)) < 0)
         {
             if (errno == EINTR)
                 continue;
@@ -137,86 +238,17 @@ int main(int argc, char **argv)
 
         if (FD_ISSET(0, &readFdSet))
         {
-            fpInput = stdin;
+            if (advShell(stdin, MAXCHILDREN, &runningChildrenPtr, children) == -1)
+                break;
         }
-        else if (FD_ISSET(fdClient, &readFdSet))
+        if (FD_ISSET(fdClient, &readFdSet))
         {
-            printf("test\n");
-            fpInput = fpClient;
+            if (advShell(fpClient, MAXCHILDREN, &runningChildrenPtr, children) == -1)
+                break;
         }
-        else
-        {
-            perror("error");
-            exit(EXIT_FAILURE);
-        }
-
-        numArgs = readLineArguments(args, MAXARGS + 1, buffer, BUFFER_SIZE, fpInput);
-
-        /* EOF (end of file) do stdin ou comando "sair" */
-        if (numArgs < 0 || (numArgs > 0 && (strcmp(args[0], COMMAND_EXIT) == 0)))
-        {
-            printf("CircuitRouter-AdvShell will exit.\n--\n");
-
-            /* Espera pela terminacao de cada filho */
-            while (runningChildren > 0)
-            {
-                waitForChild(children);
-                runningChildren--;
-            }
-
-            printChildren(children);
-            printf("--\nCircuitRouter-AdvShell ended.\n");
-            break;
-        }
-
-        else if (numArgs > 0 && strcmp(args[0], COMMAND_RUN) == 0)
-        {
-            int pid;
-            if (numArgs < 2)
-            {
-                printf("%s: invalid syntax. Try again.\n", COMMAND_RUN);
-                continue;
-            }
-            if (MAXCHILDREN != -1 && runningChildren >= MAXCHILDREN)
-            {
-                waitForChild(children);
-                runningChildren--;
-            }
-
-            pid = fork();
-            if (pid < 0)
-            {
-                perror("Failed to create new process.");
-                exit(EXIT_FAILURE);
-            }
-
-            if (pid > 0)
-            {
-                runningChildren++;
-                printf("%s: background child started with PID %d.\n\n", COMMAND_RUN, pid);
-                continue;
-            }
-            else
-            {
-                char seqsolver[] = "../CircuitRouter-SeqSolver/CircuitRouter-SeqSolver";
-                char *newArgs[3] = {seqsolver, args[1], NULL};
-
-                execv(seqsolver, newArgs);
-                perror("Error while executing child process"); // Nao deveria chegar aqui
-                exit(EXIT_FAILURE);
-            }
-        }
-
-        else if (numArgs == 0)
-        {
-            /* Nenhum argumento; ignora e volta a pedir */
-            continue;
-        }
-        else
-            printf("Unknown command. Try again.\n");
     }
 
-    close(fdClient);
+    fclose(fpClient);
     unlink(PIPE_NAME);
 
     for (int i = 0; i < vector_getSize(children); i++)

@@ -221,6 +221,7 @@ int main(int argc, char** argv){
     bool_t status = maze_checkPaths(mazePtr, pathVectorListPtr, resultFp, global_doPrint);
     assert(status == TRUE);
     fputs("Verification passed.\n",resultFp);
+    printf("Circuit solved\n"); //Write in the File Descriptor 0 - usually stdin
 
     maze_free(mazePtr);
     router_free(routerPtr);

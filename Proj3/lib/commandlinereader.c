@@ -36,14 +36,10 @@ int readLineArguments(char **argVector, int vectorSize, char *buffer, int buffer
   if (argVector == NULL || buffer == NULL || vectorSize <= 0 || bufferSize <= 0)
     return 0;
 
-  // FILE* fp = fdopen(fpInput, "r");
-
   if (fgets(buffer, bufferSize, fpInput) == NULL)
   {
     return -1;
   }
-
-  printf("%s\n", buffer);
 
   /* get the first token */
   token = strtok(buffer, s);
