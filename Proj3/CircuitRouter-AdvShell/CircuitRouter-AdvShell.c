@@ -30,7 +30,7 @@
 vector_t *children;
 int runningChildren;
 
-void sigintHandler(int sig)
+void sigintHandler()
 {
     int status;
     int pid = waitpid(-1, &status, WNOHANG);
@@ -40,7 +40,7 @@ void sigintHandler(int sig)
         exit(EXIT_FAILURE);
     }
     else if (pid == 0)
-        ; //Nenhum filho acabou
+        return; //Nenhum filho acabou
     else
     {
         for (int i = 0; i < vector_getSize(children); ++i)
@@ -51,9 +51,9 @@ void sigintHandler(int sig)
                 TIMER_READ(child->endTime);
                 child->status = status;
                 runningChildren--;
+                break;
             }
         }
-        printf("Welcome my son- %d, %d\n", pid, sig);
     }
 }
 
@@ -111,6 +111,87 @@ void printChildren(vector_t *children)
     puts("END.");
 }
 
+void runCommand(int MAXCHILDREN, FILE *fpResponse, int requestFromPipe, int numArgs, char* inputFile)
+{
+    int pid;
+    if (requestFromPipe && numArgs < 3)
+    {
+        fprintf(fpResponse, "%s: invalid syntax. Try again.\n", COMMAND_RUN);
+        fflush(fpResponse);
+        fclose(fpResponse);
+        return;
+    }
+    else if (numArgs < 2)
+    {
+        printf("%s: invalid syntax. Try again.\n", COMMAND_RUN);
+        return;
+    }
+    if (MAXCHILDREN != -1 && runningChildren >= MAXCHILDREN)
+    {
+        waitForChild(children);
+        runningChildren--;
+    }
+
+    pid = fork();
+    if (pid < 0)
+    {
+        perror("Failed to create new process.");
+        exit(EXIT_FAILURE);
+    }
+
+    if (pid > 0)
+    {
+        runningChildren++;
+        printf("%s: background child started with PID %d.\n\n", COMMAND_RUN, pid);
+        child_t *child = malloc(sizeof(child_t));
+        if (child == NULL)
+        {
+            perror("Error allocating memory");
+            exit(EXIT_FAILURE);
+        }
+
+        child->pid = pid;
+        TIMER_READ(child->startTime);
+        vector_pushBack(children, child);
+
+        if (requestFromPipe)
+            fclose(fpResponse);
+        return;
+    }
+    else
+    {
+        if (requestFromPipe)
+        {
+            int fdResponse = fileno(fpResponse);
+            close(1);
+            dup(fdResponse);
+            fclose(fpResponse);
+        }
+
+        char seqsolver[] = "../CircuitRouter-SeqSolver/CircuitRouter-SeqSolver";
+        char *newArgs[3] = {seqsolver, inputFile, NULL};
+
+        execv(seqsolver, newArgs);
+        perror("Error while executing child process");
+        exit(EXIT_FAILURE);
+    }
+}
+
+void exitCommand()
+{
+    printf("CircuitRouter-AdvShell will exit.\n--\n");
+
+    /* Espera pela terminacao de cada filho */
+    while (runningChildren > 0)
+    {
+        waitForChild(children);
+        runningChildren--;
+    }
+
+    printChildren(children);
+    printf("--\nCircuitRouter-AdvShell ended.\n");
+}
+
 int advShell(FILE *fpInput, int MAXCHILDREN, vector_t *children)
 {
     int requestFromPipe = (fpInput == stdin) ? 0 : 1;
@@ -121,8 +202,10 @@ int advShell(FILE *fpInput, int MAXCHILDREN, vector_t *children)
 
     numArgs = readLineArguments(args, MAXARGS + 1, buffer, BUFFER_SIZE, fpInput);
 
-    if (requestFromPipe && ((fpResponse = fopen(args[numArgs - 1], "w")) == NULL))
+    while (requestFromPipe && ((fpResponse = fopen(args[numArgs - 1], "w")) == NULL))
     {
+        if(errno == EINTR)
+            continue;
         perror("error fopen");
         exit(EXIT_FAILURE);
     }
@@ -137,88 +220,14 @@ int advShell(FILE *fpInput, int MAXCHILDREN, vector_t *children)
 
     else if (numArgs < 0 || (numArgs > 0 && (strcmp(args[0], COMMAND_EXIT) == 0)))
     {
-        printf("CircuitRouter-AdvShell will exit.\n--\n");
-
-        /* Espera pela terminacao de cada filho */
-        while (runningChildren > 0)
-        {
-            waitForChild(children);
-            runningChildren--;
-        }
-
-        printChildren(children);
-        printf("--\nCircuitRouter-AdvShell ended.\n");
+        exitCommand();
         return -1;
     }
 
     else if (numArgs > 0 && strcmp(args[0], COMMAND_RUN) == 0)
     {
-        int pid;
-        if (requestFromPipe && numArgs < 3)
-        {
-            fprintf(fpResponse, "%s: invalid syntax. Try again.\n", COMMAND_RUN);
-            fflush(fpResponse);
-            fclose(fpResponse);
-            return 0;
-        }
-        else if (numArgs < 2)
-        {
-            printf("%s: invalid syntax. Try again.\n", COMMAND_RUN);
-            return 0;
-        }
-        if (MAXCHILDREN != -1 && runningChildren >= MAXCHILDREN)
-        {
-            waitForChild(children);
-            runningChildren--;
-        }
-
-        pid = fork();
-        if (pid < 0)
-        {
-            perror("Failed to create new process.");
-            exit(EXIT_FAILURE);
-        }
-
-        if (pid > 0)
-        {
-            runningChildren++;
-            printf("%s: background child started with PID %d.\n\n", COMMAND_RUN, pid);
-            child_t *child = malloc(sizeof(child_t));
-            if (child == NULL)
-            {
-                perror("Error allocating memory");
-                exit(EXIT_FAILURE);
-            }
-
-            child->pid = pid;
-            TIMER_READ(child->startTime);
-            vector_pushBack(children, child);
-
-            if (requestFromPipe)
-                fclose(fpResponse);
-            return 0;
-        }
-        else
-        {
-            if (requestFromPipe)
-            {
-                int fdResponse = fileno(fpResponse);
-                close(1);
-                dup(fdResponse);
-                fclose(fpResponse);
-            }
-            else
-            {
-                close(1);
-            }
-
-            char seqsolver[] = "../CircuitRouter-SeqSolver/CircuitRouter-SeqSolver";
-            char *newArgs[3] = {seqsolver, args[1], NULL};
-
-            execv(seqsolver, newArgs);
-            perror("Error while executing child process");
-            exit(EXIT_FAILURE);
-        }
+        runCommand(MAXCHILDREN, fpResponse, requestFromPipe, numArgs, args[1]);
+        return 0;
     }
 
     else if (numArgs == 0)
@@ -266,7 +275,7 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-    if ((fpClient = fopen(PIPE_NAME, "r+")) == NULL)
+    if ((fpClient = fopen(PIPE_NAME, "r+")) == NULL) //ASK: Se faz sentido verificar EINTR
     {
         perror("error open fifo");
         exit(EXIT_FAILURE);
