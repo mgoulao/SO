@@ -9,7 +9,6 @@
 #include <sys/stat.h>
 #include <sys/select.h>
 
-#define PIPE_NAME "/tmp/CircuitRouter-AdvShell.pipe"
 #define COMMAND_EXIT "quit"
 #define COMMAND_RUN "run"
 #define BUFF_SIZE 124
@@ -40,7 +39,7 @@ FILE *createResponseFifo(char *pathName)
 
 	unlink(responsePipeName);
 
-	if (mkfifo(responsePipeName, 0777) < 0)
+	if (mkfifo(responsePipeName, 0666) < 0)
 	{ //FIXME: change permissions
 		perror("error mkfifo");
 		exit(EXIT_FAILURE);
@@ -90,13 +89,14 @@ void clientShell(FILE *fpAdvShell, FILE *fpResponse, char *responsePipePath)
 
 int main(int argc, char *argv[])
 {
-	char *responsePipePath;
+	char *responsePipePath = "/tmp/response";
+	char *advShellPipeName;
 	FILE *fpAdvShell;
 	FILE *fpResponse;
 
 	if (argv[1] != NULL)
 	{
-		responsePipePath = (char *)malloc(strlen(argv[1]) + 7); // 6*X and \0
+		advShellPipeName = (char *)malloc(strlen(argv[1])); // 6*X and \0
 		strcpy(responsePipePath, argv[1]);
 	}
 	else
@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	if ((fpAdvShell = fopen(PIPE_NAME, "w")) == NULL)
+	if ((fpAdvShell = fopen(advShellPipeName, "w")) == NULL)
 	{
 		perror("error open fifo");
 		exit(EXIT_FAILURE);
@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
 	unlink(responsePipePath);
 	fclose(fpResponse);
 	fclose(fpAdvShell);
-	free(responsePipePath);
+	free(advShellPipeName);
 
 	return 0;
 }

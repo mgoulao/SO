@@ -32,7 +32,7 @@ int runningChildren;
 
 void sigintHandler()
 {
-    int status;
+    int status, vectorSize = vector_getSize(children);
     int pid = waitpid(-1, &status, WNOHANG);
     if (pid == -1)
     {
@@ -43,7 +43,7 @@ void sigintHandler()
         return; //Nenhum filho acabou
     else
     {
-        for (int i = 0; i < vector_getSize(children); ++i)
+        for (int i = 0; i < vectorSize; ++i)
         {
             child_t *child = vector_at(children, i);
             if (child->pid == pid)
@@ -269,7 +269,7 @@ int main(int argc, char **argv)
 
     unlink(PIPE_NAME);
 
-    if (mkfifo(PIPE_NAME, 0777) < 0)
+    if (mkfifo(PIPE_NAME, 0666) < 0)
     { //FIXME: change permissions
         perror("error mkfifo");
         exit(EXIT_FAILURE);
