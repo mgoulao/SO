@@ -40,7 +40,7 @@ FILE *createResponseFifo(char *pathName)
 	unlink(responsePipeName);
 
 	if (mkfifo(responsePipeName, 0666) < 0)
-	{ //FIXME: change permissions
+	{
 		perror("error mkfifo");
 		exit(EXIT_FAILURE);
 	}
@@ -92,15 +92,16 @@ void clientShell(FILE *fpAdvShell, FILE *fpResponse, char *responsePipePath)
 
 int main(int argc, char *argv[])
 {
-	char *responsePipePath = "/tmp/response";
+	char *responseStartName = "/tmp/response";
+	char *responsePipePath = (char *)malloc(strlen(responseStartName) + 7);
 	char *advShellPipeName;
 	FILE *fpAdvShell;
 	FILE *fpResponse;
 
 	if (argv[1] != NULL)
 	{
-		advShellPipeName = (char *)malloc(strlen(argv[1])); // 6*X and \0
-		strcpy(responsePipePath, argv[1]);
+		advShellPipeName = (char *)malloc(strlen(argv[1])+1);
+		strcpy(advShellPipeName, argv[1]);
 	}
 	else
 	{
@@ -114,6 +115,7 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
+	strcpy(responsePipePath, responseStartName);
 	fpResponse = createResponseFifo(responsePipePath);
 
 	clientShell(fpAdvShell, fpResponse, responsePipePath);
@@ -121,6 +123,7 @@ int main(int argc, char *argv[])
 	unlink(responsePipePath);
 	fclose(fpResponse);
 	fclose(fpAdvShell);
+	free(responsePipePath);
 	free(advShellPipeName);
 
 	return 0;
