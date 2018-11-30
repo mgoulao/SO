@@ -76,7 +76,10 @@ void clientShell(FILE *fpAdvShell, FILE *fpResponse, char *responsePipePath)
 			fprintf(fpAdvShell, "%s %s\n", args[0], responsePipePath);
 		else
 			fprintf(fpAdvShell, "%s %s %s\n", args[0], args[1], responsePipePath);
-		fflush(fpAdvShell);
+		if(fflush(fpAdvShell) == EOF) {
+            perror("error fflush");
+            exit(EXIT_FAILURE);
+        }
 
 		if (fgets(respBuffer, BUFF_SIZE, fpResponse) == NULL)
 		{

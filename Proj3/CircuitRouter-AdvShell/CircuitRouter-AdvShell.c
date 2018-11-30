@@ -30,64 +30,35 @@
 vector_t *children;
 int runningChildren;
 
-void sigintHandler()
+void sigchldHandler()
 {
     int status, vectorSize = vector_getSize(children);
-    int pid = waitpid(-1, &status, WNOHANG);
-    if (pid == -1)
-    {
-        perror("error waitpid");
-        exit(EXIT_FAILURE);
-    }
-    else if (pid == 0)
-        return; //Nenhum filho acabou
-    else
-    {
-        for (int i = 0; i < vectorSize; ++i)
-        {
-            child_t *child = vector_at(children, i);
-            if (child->pid == pid)
-            {
-                TIMER_READ(child->endTime);
-                child->status = status;
-                runningChildren--;
-                break;
-            }
-        }
-    }
-}
-
-void waitForChild(vector_t *children)
-{
     while (1)
     {
-        int status;
-        int pid = wait(&status);
-        if (pid < 0)
+        int pid = waitpid(-1, &status, WNOHANG);
+        if (pid == -1)
         {
-            if (errno == EINTR)
+            if (errno == ECHILD)
+                break;
+            perror("error waitpid");
+            exit(EXIT_FAILURE);
+        }
+        else if (pid == 0)
+            return;
+        else
+        {
+            for (int i = 0; i < vectorSize; ++i)
             {
-                /* Este codigo de erro significa que chegou signal que interrompeu a espera
-                   pela terminacao de filho; logo voltamos a esperar */
-                continue;
-            }
-            else
-            {
-                perror("Unexpected error while waiting for child.");
-                exit(EXIT_FAILURE);
+                child_t *child = vector_at(children, i);
+                if (child->pid == pid)
+                {
+                    TIMER_READ(child->endTime);
+                    child->status = status;
+                    runningChildren--;
+                    break;
+                }
             }
         }
-
-        for (int i = 0; i < vector_getSize(children); ++i)
-        {
-            child_t *child = vector_at(children, i);
-            if (child->pid == pid)
-            {
-                TIMER_READ(child->endTime);
-                child->status = status;
-            }
-        }
-        return;
     }
 }
 
@@ -111,13 +82,17 @@ void printChildren(vector_t *children)
     puts("END.");
 }
 
-void runCommand(int MAXCHILDREN, FILE *fpResponse, int requestFromPipe, int numArgs, char* inputFile)
+void runCommand(int MAXCHILDREN, FILE *fpResponse, int requestFromPipe, int numArgs, char *inputFile, sigset_t* mask)
 {
     int pid;
     if (requestFromPipe && numArgs < 3)
     {
         fprintf(fpResponse, "%s: invalid syntax. Try again.\n", COMMAND_RUN);
-        fflush(fpResponse);
+        if (fflush(fpResponse) == EOF)
+        {
+            perror("error fflush");
+            exit(EXIT_FAILURE);
+        }
         fclose(fpResponse);
         return;
     }
@@ -128,10 +103,14 @@ void runCommand(int MAXCHILDREN, FILE *fpResponse, int requestFromPipe, int numA
     }
     if (MAXCHILDREN != -1 && runningChildren >= MAXCHILDREN)
     {
-        waitForChild(children);
-        runningChildren--;
+        while (runningChildren >= MAXCHILDREN)
+            sleep(1);
     }
-
+    if (sigprocmask(SIG_BLOCK, mask, NULL) == -1)
+    {
+        perror("error sigprocmask");
+        exit(EXIT_FAILURE);
+    }
     pid = fork();
     if (pid < 0)
     {
@@ -153,7 +132,11 @@ void runCommand(int MAXCHILDREN, FILE *fpResponse, int requestFromPipe, int numA
         child->pid = pid;
         TIMER_READ(child->startTime);
         vector_pushBack(children, child);
-
+        if (sigprocmask(SIG_UNBLOCK, mask, NULL) == -1)
+        {
+            perror("error sigprocmask");
+            exit(EXIT_FAILURE);
+        }
         if (requestFromPipe)
             fclose(fpResponse);
         return;
@@ -163,8 +146,25 @@ void runCommand(int MAXCHILDREN, FILE *fpResponse, int requestFromPipe, int numA
         if (requestFromPipe)
         {
             int fdResponse = fileno(fpResponse);
-            close(1);
-            dup(fdResponse);
+            if (fdResponse == -1)
+            {
+                perror("error fileno: argument is not a valid stream");
+                exit(EXIT_FAILURE);
+            }
+            while (close(1) == -1)
+            {
+                if (errno == EINTR)
+                    continue;
+                perror("error close");
+                exit(EXIT_FAILURE);
+            }
+            while (dup(fdResponse) == -1)
+            {
+                if (errno == EINTR)
+                    continue;
+                perror("error dup");
+                exit(EXIT_FAILURE);
+            }
             fclose(fpResponse);
         }
 
@@ -183,16 +183,13 @@ void exitCommand()
 
     /* Espera pela terminacao de cada filho */
     while (runningChildren > 0)
-    {
-        waitForChild(children);
-        runningChildren--;
-    }
+        sleep(1);
 
     printChildren(children);
     printf("--\nCircuitRouter-AdvShell ended.\n");
 }
 
-int advShell(FILE *fpInput, int MAXCHILDREN, vector_t *children)
+int advShell(FILE *fpInput, int MAXCHILDREN, vector_t *children, sigset_t* mask)
 {
     int requestFromPipe = (fpInput == stdin) ? 0 : 1;
     int numArgs;
@@ -200,11 +197,15 @@ int advShell(FILE *fpInput, int MAXCHILDREN, vector_t *children)
     char buffer[BUFFER_SIZE];
     FILE *fpResponse;
 
-    numArgs = readLineArguments(args, MAXARGS + 1, buffer, BUFFER_SIZE, fpInput);
+    if ((numArgs = readLineArguments(args, MAXARGS + 1, buffer, BUFFER_SIZE, fpInput)) == -1)
+    {
+        perror("error readLineArguments");
+        exit(EXIT_FAILURE);
+    }
 
     while (requestFromPipe && ((fpResponse = fopen(args[numArgs - 1], "w")) == NULL))
     {
-        if(errno == EINTR)
+        if (errno == EINTR)
             continue;
         perror("error fopen");
         exit(EXIT_FAILURE);
@@ -213,7 +214,11 @@ int advShell(FILE *fpInput, int MAXCHILDREN, vector_t *children)
     if (!(strcmp(args[0], COMMAND_RUN) == 0) && requestFromPipe)
     {
         fprintf(fpResponse, "%s\n", "Command not supported.");
-        fflush(fpResponse);
+        if (fflush(fpResponse) == EOF)
+        {
+            perror("error fflush");
+            exit(EXIT_FAILURE);
+        }
         fclose(fpResponse);
         return 0;
     }
@@ -226,7 +231,7 @@ int advShell(FILE *fpInput, int MAXCHILDREN, vector_t *children)
 
     else if (numArgs > 0 && strcmp(args[0], COMMAND_RUN) == 0)
     {
-        runCommand(MAXCHILDREN, fpResponse, requestFromPipe, numArgs, args[1]);
+        runCommand(MAXCHILDREN, fpResponse, requestFromPipe, numArgs, args[1], mask);
         return 0;
     }
 
@@ -244,7 +249,7 @@ int advShell(FILE *fpInput, int MAXCHILDREN, vector_t *children)
 int main(int argc, char **argv)
 {
     struct sigaction act;
-    act.sa_handler = &sigintHandler;
+    act.sa_handler = &sigchldHandler;
     act.sa_flags = SA_RESTART;
     sigfillset(&act.sa_mask);
     if (sigaction(SIGCHLD, &act, NULL) == -1)
@@ -270,18 +275,22 @@ int main(int argc, char **argv)
     unlink(PIPE_NAME);
 
     if (mkfifo(PIPE_NAME, 0666) < 0)
-    { //FIXME: change permissions
+    {
         perror("error mkfifo");
         exit(EXIT_FAILURE);
     }
 
-    if ((fpClient = fopen(PIPE_NAME, "r+")) == NULL) //ASK: Se faz sentido verificar EINTR
+    if ((fpClient = fopen(PIPE_NAME, "r+")) == NULL)
     {
         perror("error open fifo");
         exit(EXIT_FAILURE);
     }
 
-    fdClient = fileno(fpClient);
+    if ((fdClient = fileno(fpClient)) == -1)
+    {
+        perror("error fileno: argument is not a valid stream");
+        exit(EXIT_FAILURE);
+    }
 
     printf("Welcome to CircuitRouter-AdvShell\n\n");
 
@@ -303,12 +312,12 @@ int main(int argc, char **argv)
 
         if (FD_ISSET(0, &readFdSet))
         {
-            if (advShell(stdin, MAXCHILDREN, children) == -1)
+            if (advShell(stdin, MAXCHILDREN, children, &act.sa_mask) == -1)
                 break;
         }
         if (FD_ISSET(fdClient, &readFdSet))
         {
-            if (advShell(fpClient, MAXCHILDREN, children) == -1)
+            if (advShell(fpClient, MAXCHILDREN, children, &act.sa_mask) == -1)
                 break;
         }
     }
