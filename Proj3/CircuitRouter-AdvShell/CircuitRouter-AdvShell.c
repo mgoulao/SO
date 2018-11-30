@@ -1,4 +1,3 @@
-
 /*
 // Projeto SO - exercise 1, version 1
 // Sistemas Operativos, DEI/IST/ULisboa 2018-19
