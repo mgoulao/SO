@@ -23,7 +23,7 @@ void showUsage()
 FILE *createResponseFifo(char *pathName)
 {
 	char *placeholder = "XXXXXX";
-	char responsePipeName[strlen(pathName) + strlen(placeholder)];
+	char responsePipeName[strlen(pathName) + strlen(placeholder) + 1];
 	int fdResponse;
 	FILE *fpResponse;
 
